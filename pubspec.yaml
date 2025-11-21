@@ -1,0 +1,91 @@
+name: inventory
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.4.0
+  shared_preferences: ^2.0.15
+  jwt_decoder: ^2.0.1
+  image_picker: ^1.0.7
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+  cupertino_icons: ^1.0.8
+  connectivity_plus: ^6.1.4
+  crypto: ^3.0.3
+  flutter_launcher_icons: ^0.14.4  # or latest version
+  # google_maps_flutter: ^2.2.0
+  google_maps_flutter: ^2.6.0 # or latest
+  # permission_handler: ^10.4.0
+  geolocator: ^14.0.2
+  permission_handler: ^12.0.1
+  # url_launcher: ^6.1.11
+  camera: ^0.11.2
+  url_launcher: ^6.2.6
+  image: ^4.1.7
+  mobile_scanner: 7.0.1
+  pdf: ^3.10.4
+  printing: ^5.11.0
+  path_provider: ^2.1.1
+  excel: ^4.0.3
+  share_plus: ^11.1.0
+  universal_html: ^2.2.4
+  signature: ^5.4.0
+  file_picker: ^10.3.3
+  csv: ^5.0.2
+  
+  
+  
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/lang/en.json
+    - assets/lang/la.json  
+    - assets/flags/us.png
+    - assets/flags/la.png
+    - assets/images/
+    - assets/images/default_profile.png
+    - assets/fonts/
+
+  fonts:
+  - family: Times
+    fonts:
+      - asset: assets/fonts/times.ttf
+      - asset: assets/fonts/times-bold.ttf
+        weight: 700
+  - family: Saysettha
+    fonts:
+        - asset: assets/fonts/Saysettha-Regular.ttf
+        - asset: assets/fonts/Saysettha-Bold.ttf
+          weight: 700
+  - family: Phetsarath
+    fonts:
+      - asset: assets/fonts/Phetsarath-Regular.ttf
+      - asset: assets/fonts/Phetsarath-Bold.ttf
+        weight: 700
+    
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icon/Inventory.png"  # Put your icon image here
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  adaptive_icon_background: "#FFFFFF" # only available for Android 8.0 devices and above
+  adaptive_icon_foreground: "assets/icon/Inventory.png" # only available for Android 8.0 devices and above
+
+  flutter_lints: ^6.0.0
+
