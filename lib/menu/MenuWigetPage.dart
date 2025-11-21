@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:inventory/config/theme.dart';
-import 'package:inventory/menu/AddStockPage.dart';
-import 'package:inventory/menu/DeductStockPage.dart';
-// import 'package:inventory/menu/MenuHomePage_with_permissions.dart';
-import 'package:inventory/menu/MenuHomePage.dart' show MenuHomePage;
-import 'package:inventory/menu/MenuSettingsPage.dart';
+import 'package:Restaurant/config/theme.dart';
+import 'package:Restaurant/menu/AddStockPage.dart';
+import 'package:Restaurant/menu/DeductStockPage.dart';
+// import 'package:Restaurant/menu/MenuHomePage_with_permissions.dart';
+import 'package:Restaurant/menu/MenuHomePage.dart' show MenuHomePage;
+import 'package:Restaurant/menu/MenuSettingsPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/simple_translations.dart';
 

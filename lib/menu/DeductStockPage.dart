@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/company_config.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
-import 'package:inventory/menu/MenuWigetPage.dart';
+import 'package:Restaurant/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
+import 'package:Restaurant/menu/MenuWigetPage.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -270,14 +270,14 @@ class _DeductStockPageState extends State<DeductStockPage> {
     }
   }
 
-  Future<void> _deductInventory() async {
+  Future<void> _deductRestaurant() async {
     if (!_validateForm()) return;
 
     setState(() => _isSubmitting = true);
 
     try {
       final body = _buildRequestBody();
-      final response = await _apiRequest('POST', '/api/inventory', body: body);
+      final response = await _apiRequest('POST', '/api/Restaurant', body: body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         _showMessage(SimpleTranslations.get(_langCode, 'stock_deducted_successfully'));
@@ -1092,7 +1092,7 @@ class _DeductStockPageState extends State<DeductStockPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _deductInventory,
+        onPressed: _isSubmitting ? null : _deductRestaurant,
         style: ElevatedButton.styleFrom(
           backgroundColor: _isSubmitting ? Colors.grey : Colors.orange,
           foregroundColor: Colors.white,

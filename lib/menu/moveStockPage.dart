@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'dart:io';
@@ -207,7 +207,7 @@ class _AddStockPageState extends State<AddStockPage> {
   }
 
   // Form Operations
-  Future<void> _createNewInventory() async {
+  Future<void> _createNewRestaurant() async {
   if (!_validateForm()) return;
 
   setState(() => _isSubmitting = true);
@@ -219,7 +219,7 @@ class _AddStockPageState extends State<AddStockPage> {
     debugPrint('📦 DEBUG: Request Body: $requestBody');
 
     final response = await _makeApiRequest(
-      '/api/inventory',
+      '/api/Restaurant',
       method: 'POST',
       body: requestBody,
     );
@@ -228,14 +228,14 @@ class _AddStockPageState extends State<AddStockPage> {
     print('📝 DEBUG: Response Body: ${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      _showSuccessSnackBar(SimpleTranslations.get(_langCode, 'inventory_created_success'));
+      _showSuccessSnackBar(SimpleTranslations.get(_langCode, 'Restaurant_created_success'));
       _clearForm();
-      _navigateToInventoryDashboard();
+      _navigateToRestaurantDashboard();
     } else {
-      _handleApiError(response, 'Failed to create inventory');
+      _handleApiError(response, 'Failed to create Restaurant');
     }
   } catch (e) {
-    _handleCreateInventoryError(e);
+    _handleCreateRestaurantError(e);
   } finally {
     if (mounted) {
       setState(() => _isSubmitting = false);
@@ -404,7 +404,7 @@ bool _validateNumericInputs() {
     }
   }
 
-  void _handleCreateInventoryError(dynamic error) {
+  void _handleCreateRestaurantError(dynamic error) {
     String message;
     if (error.toString().contains('SocketException') || 
         error.toString().contains('TimeoutException')) {
@@ -412,7 +412,7 @@ bool _validateNumericInputs() {
     } else if (error.toString().contains('FormatException')) {
       message = SimpleTranslations.get(_langCode, 'invalid_data_format');
     } else {
-      message = '${SimpleTranslations.get(_langCode, 'error_creating_inventory')}: $error';
+      message = '${SimpleTranslations.get(_langCode, 'error_creating_Restaurant')}: $error';
     }
     _showErrorSnackBar(message);
   }
@@ -426,17 +426,17 @@ bool _validateNumericInputs() {
     });
   }
 
-  void _navigateToInventoryDashboard() {
+  void _navigateToRestaurantDashboard() {
     if (!mounted) return;
     
     try {
       Navigator.of(context).pushNamedAndRemoveUntil(
-        '/inventory-dashboard',
+        '/Restaurant-dashboard',
         (route) => false,
       );
     } catch (e) {
       try {
-        Navigator.of(context).pushReplacementNamed('/inventory-dashboard');
+        Navigator.of(context).pushReplacementNamed('/Restaurant-dashboard');
       } catch (e2) {
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop(true);
@@ -500,7 +500,7 @@ bool _validateNumericInputs() {
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       title: Text(
-        SimpleTranslations.get(_langCode, 'add_new_inventory'),
+        SimpleTranslations.get(_langCode, 'add_new_Restaurant'),
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       backgroundColor: _primaryColor,
@@ -520,7 +520,7 @@ bool _validateNumericInputs() {
         barrierDismissible: false,
         builder: (context) => AlertDialog(
           title: Text(SimpleTranslations.get(_langCode, 'confirm_exit')),
-          content: Text(SimpleTranslations.get(_langCode, 'creating_inventory_exit_warning')),
+          content: Text(SimpleTranslations.get(_langCode, 'creating_Restaurant_exit_warning')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -690,7 +690,7 @@ bool _validateNumericInputs() {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              SimpleTranslations.get(_langCode, 'create_new_inventory_item'),
+              SimpleTranslations.get(_langCode, 'create_new_Restaurant_item'),
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -851,7 +851,7 @@ bool _validateNumericInputs() {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _createNewInventory,
+        onPressed: _isSubmitting ? null : _createNewRestaurant,
         style: ElevatedButton.styleFrom(
           backgroundColor: _isSubmitting ? Colors.grey : _primaryColor,
           foregroundColor: Colors.white,
@@ -877,7 +877,7 @@ bool _validateNumericInputs() {
         ),
         const SizedBox(width: 12),
         Text(
-          SimpleTranslations.get(_langCode, 'creating_inventory'),
+          SimpleTranslations.get(_langCode, 'creating_Restaurant'),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],
@@ -891,7 +891,7 @@ bool _validateNumericInputs() {
         const Icon(Icons.add_box, size: 24),
         const SizedBox(width: 8),
         Text(
-          SimpleTranslations.get(_langCode, 'create_inventory_item'),
+          SimpleTranslations.get(_langCode, 'create_Restaurant_item'),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ],

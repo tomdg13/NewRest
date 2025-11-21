@@ -1,14 +1,14 @@
 // MenuHomePage_with_permissions.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:inventory/business/ApprovalPage.dart';
-import 'package:inventory/business/ListTerminalPage.dart';
-import 'package:inventory/monitor/ProductPage.dart';
-import 'package:inventory/monitor/StockPage.dart';
-import 'package:inventory/monitor/ExpirePage.dart' show ExpirePage;
-import 'package:inventory/monitor/locationPage.dart';
-import 'package:inventory/report/StoreReportPage.dart' show StoreReportPage;
-import 'package:inventory/upload/SettlementViewPage.dart';
+import 'package:Restaurant/business/ApprovalPage.dart';
+import 'package:Restaurant/business/ListTerminalPage.dart';
+import 'package:Restaurant/monitor/ProductPage.dart';
+import 'package:Restaurant/monitor/StockPage.dart';
+import 'package:Restaurant/monitor/ExpirePage.dart' show ExpirePage;
+import 'package:Restaurant/monitor/locationPage.dart';
+import 'package:Restaurant/report/StoreReportPage.dart' show StoreReportPage;
+import 'package:Restaurant/upload/SettlementViewPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/theme.dart';
 import '../utils/simple_translations.dart';
@@ -382,7 +382,7 @@ class _MenuHomePageState extends State<MenuHomePage> {
             children: [
               Expanded(
                 child: Text(
-                  SimpleTranslations.get(_langCode, 'welcome_inventory'),
+                  SimpleTranslations.get(_langCode, 'welcome_Restaurant'),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).primaryColor,
@@ -401,7 +401,7 @@ class _MenuHomePageState extends State<MenuHomePage> {
           ),
           const SizedBox(height: 8),
           Text(
-            SimpleTranslations.get(_langCode, 'inventory_description'),
+            SimpleTranslations.get(_langCode, 'Restaurant_description'),
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: Colors.grey.shade700,
             ),

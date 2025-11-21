@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
-import 'package:inventory/models/terminal_models.dart';
-import 'package:inventory/services/excel.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
+import 'package:Restaurant/models/terminal_models.dart';
+import 'package:Restaurant/services/excel.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -11,7 +11,7 @@ import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:inventory/config/company_config.dart';
+import 'package:Restaurant/config/company_config.dart';
 import '../utils/simple_translations.dart';
 
 class ListDetailPage extends StatefulWidget {

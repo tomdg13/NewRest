@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/company_config.dart';
+import 'package:Restaurant/config/company_config.dart';
 import 'TerminalAddPage.dart';
 import 'TerminalEditPage.dart';
 import 'TerminalPdfPage.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'dart:convert';
 import 'dart:io';
 import '../utils/simple_translations.dart';

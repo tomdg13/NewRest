@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/company_config.dart';
 import '../utils/simple_translations.dart';
 
 class ProductPage extends StatefulWidget {
@@ -1288,10 +1288,10 @@ class _ProductPageState extends State<ProductPage> with TickerProviderStateMixin
           child: OutlinedButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Navigate to inventory/stock page for this product
+              // TODO: Navigate to Restaurant/stock page for this product
             },
             icon: const Icon(Icons.inventory),
-            label: Text(SimpleTranslations.get(langCode, 'view_inventory')),
+            label: Text(SimpleTranslations.get(langCode, 'view_Restaurant')),
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.symmetric(vertical: _isWideScreen ? 16 : 12),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),

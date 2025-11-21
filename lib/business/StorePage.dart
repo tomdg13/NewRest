@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // For kIsWeb
 import 'package:http/http.dart' as http;
-import 'package:inventory/business/StoreAddPage.dart';
-import 'package:inventory/business/StoreEditPage.dart';
-import 'package:inventory/config/company_config.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/business/StoreAddPage.dart';
+import 'package:Restaurant/business/StoreEditPage.dart';
+import 'package:Restaurant/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'dart:convert';
 import '../utils/simple_translations.dart';
 import 'package:shared_preferences/shared_preferences.dart';

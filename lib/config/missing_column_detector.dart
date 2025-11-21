@@ -1,4 +1,4 @@
-import 'package:inventory/config/settlement_column.dart';
+import 'package:Restaurant/config/settlement_column.dart';
 
 class MissingColumnDetector {
   static const String VERSION = '1.0.0';

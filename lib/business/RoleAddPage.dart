@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/company_config.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../utils/simple_translations.dart';
@@ -92,7 +92,7 @@ class _RoleAddPageState extends State<RoleAddPage> {
     {'code': 'all', 'name': 'All Departments', 'icon': Icons.business},
     {'code': 'management', 'name': 'Management', 'icon': Icons.group_work},
     {'code': 'sales', 'name': 'Sales', 'icon': Icons.point_of_sale},
-    {'code': 'inventory', 'name': 'Inventory', 'icon': Icons.inventory},
+    {'code': 'Restaurant', 'name': 'Restaurant', 'icon': Icons.inventory},
     {'code': 'warehouse', 'name': 'Warehouse', 'icon': Icons.warehouse},
     {'code': 'finance', 'name': 'Finance', 'icon': Icons.attach_money},
     {'code': 'hr', 'name': 'Human Resources', 'icon': Icons.people},

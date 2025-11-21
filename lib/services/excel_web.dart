@@ -1,6 +1,6 @@
 // lib/services/excel.dart
 import 'package:excel/excel.dart';
-import 'package:inventory/models/terminal_models.dart';
+import 'package:Restaurant/models/terminal_models.dart';
 import 'dart:typed_data';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';

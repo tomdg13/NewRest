@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login/login_page.dart';
 import 'menu/MenuWigetPage.dart';

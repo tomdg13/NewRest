@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/company_config.dart';
-import 'package:inventory/business/RoleAddPage.dart';
-import 'package:inventory/business/RoleEditPage.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/company_config.dart';
+import 'package:Restaurant/business/RoleAddPage.dart';
+import 'package:Restaurant/business/RoleEditPage.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'dart:convert';
 import '../utils/simple_translations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:inventory/business/RolePermissionPage.dart';
+import 'package:Restaurant/business/RolePermissionPage.dart';
 
 class RoleListPage extends StatefulWidget {
   const RoleListPage({Key? key}) : super(key: key);

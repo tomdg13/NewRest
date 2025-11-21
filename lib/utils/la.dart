@@ -226,7 +226,7 @@ const Map<String, String> laTranslations = {
 
       // --- login ---
       'login': 'ເຂົ້າລະບົບ',
-      'loginTitle': 'Inventory',
+      'loginTitle': 'Restaurant',
       'logout': 'ອອກຈາກລະບົບ',
       'username': 'ຊື່ຜູ້ໃຊ້',
       'phone': 'ເບີໂທ',
@@ -468,7 +468,7 @@ const Map<String, String> laTranslations = {
       "please_select_role": "ກະລຸນາເລືອກບົດບາດ",
 
       "basic_information": "ຂໍ້ມູນພື້ນຖານ",
-      "pricing_inventory": "ລາຄາ ແລະ ສາງ",
+      "pricing_Restaurant": "ລາຄາ ແລະ ສາງ",
       "additional_details": "ລາຍລະອຽດເພີ່ມເຕີມ",
       "custom_category": "ປະເພດກຳນົດເອງ",
 
@@ -501,7 +501,7 @@ const Map<String, String> laTranslations = {
       'auth_token_not_found':
           'ບໍ່ພົບໂທເຄນການເຂົ້າສູ່ລະບົບ. ກະລຸນາເຂົ້າສູ່ລະບົບອີກຄັ້ງ.',
       'session_expired': 'ໝົດອາຍຸການເຂົ້າສູ່ລະບົບ. ກະລຸນາເຂົ້າສູ່ລະບົບອີກຄັ້ງ.',
-      'failed_to_load_inventory': 'ໂຫຼດຂໍ້ມູນສິນຄ້າບໍ່ສຳເລັດ',
+      'failed_to_load_Restaurant': 'ໂຫຼດຂໍ້ມູນສິນຄ້າບໍ່ສຳເລັດ',
 
       // Page Title & Navigation
       'add_stock': 'ເພີ່ມສິນຄ້າ',
@@ -522,9 +522,9 @@ const Map<String, String> laTranslations = {
       'reserved': 'ສຳຮອງ',
 
       // Sections & Headers
-      'create_new_inventory_item': 'ສ້າງລາຍການສິນຄ້າໃໝ່',
+      'create_new_Restaurant_item': 'ສ້າງລາຍການສິນຄ້າໃໝ່',
       'add_stock_to_existing_item': 'ເພີ່ມສິນຄ້າໃສ່ລາຍການທີ່ມີຢູ່',
-      'select_inventory_item': 'ເລືອກລາຍການສິນຄ້າ',
+      'select_Restaurant_item': 'ເລືອກລາຍການສິນຄ້າ',
       'selected_item_details': 'ລາຍລະອຽດລາຍການທີ່ເລືອກ',
       'product_location_info': 'ຂໍ້ມູນສິນຄ້າ ແລະ ສະຖານທີ່',
       'stock_info': 'ຂໍ້ມູນສິນຄ້າ',
@@ -532,7 +532,7 @@ const Map<String, String> laTranslations = {
       'additional_info': 'ຂໍ້ມູນເພີ່ມເຕີມ',
 
       // Form Actions & Buttons
-      'create_inventory_item': 'ສ້າງລາຍການສິນຄ້າ',
+      'create_Restaurant_item': 'ສ້າງລາຍການສິນຄ້າ',
       'quantity_to_add': 'ຈຳນວນທີ່ຈະເພີ່ມ',
       'reason_for_stock_addition': 'ເຫດຜົນການເພີ່ມສິນຄ້າ',
       'add_stock_button': 'ເພີ່ມສິນຄ້າ',
@@ -540,14 +540,14 @@ const Map<String, String> laTranslations = {
       'reset': 'ຣີເຊັດ',
 
       // Success Messages
-      'inventory_created_success': 'ສ້າງລາຍການສິນຄ້າສຳເລັດແລ້ວ!',
+      'Restaurant_created_success': 'ສ້າງລາຍການສິນຄ້າສຳເລັດແລ້ວ!',
       'stock_added_success': 'ເພີ່ມສິນຄ້າສຳເລັດແລ້ວ!',
       'form_submitted_success': 'ສົ່ງຟອມສຳເລັດແລ້ວ!',
       'data_saved_success': 'ບັນທຶກຂໍ້ມູນສຳເລັດແລ້ວ!',
 
       // Error Messages - API
-      'failed_to_create_inventory': 'ສ້າງລາຍການສິນຄ້າບໍ່ສຳເລັດ',
-      'error_creating_inventory': 'ເກີດຂໍ້ຜິດພາດໃນການສ້າງລາຍການສິນຄ້າ',
+      'failed_to_create_Restaurant': 'ສ້າງລາຍການສິນຄ້າບໍ່ສຳເລັດ',
+      'error_creating_Restaurant': 'ເກີດຂໍ້ຜິດພາດໃນການສ້າງລາຍການສິນຄ້າ',
       'api_error': 'ເກີດຂໍ້ຜິດພາດ API',
 
       // Error Messages - Validation
@@ -560,21 +560,21 @@ const Map<String, String> laTranslations = {
       'password_too_short': 'ລະຫັດຜ່ານສັ້ນເກີນໄປ',
       'passwords_dont_match': 'ລະຫັດຜ່ານບໍ່ກົງກັນ',
 
-      // Inventory Related Terms
+      // Restaurant Related Terms
       'current_stock': 'ສະຕ໋ອກປັດຈຸບັນ',
       'available': 'ມີໃຫ້',
       'available_quantity': 'ຈຳນວນທີ່ມີ',
       'total_stock': 'ສະຕ໋ອກທັງໝົດ',
       'in_stock': 'ມີສິນຄ້າ',
       'out_of_stock': 'ໝົດສິນຄ້າ',
-      'inventory': 'ສິນຄ້າຄົງຄັງ',
+      'Restaurant': 'ສິນຄ້າຄົງຄັງ',
       'warehouse': 'ສາງເກັບສິນຄ້າ',
       'supplier': 'ຜູ້ສະໜອງ',
       'batch': 'ລອດ',
       'expiry': 'ໝົດອາຍຸ',
 
       // Dropdown Hints & Placeholders
-      'select_inventory_item_hint': 'ເລືອກລາຍການສິນຄ້າ',
+      'select_Restaurant_item_hint': 'ເລືອກລາຍການສິນຄ້າ',
       'select_supplier': 'ເລືອກຜູ້ສະໜອງ',
       'choose_option': 'ເລືອກຕົວເລືອກ',
       'no_options_available': 'ບໍ່ມີຕົວເລືອກ',
@@ -615,7 +615,7 @@ const Map<String, String> laTranslations = {
       'scanned_product': 'ສິນຄ້າທີ່ສະແກນ',
 
       // Page Title & Headers
-      'add_new_inventory': 'ເພີ່ມສາງຄັງໃໝ່',
+      'add_new_Restaurant': 'ເພີ່ມສາງຄັງໃໝ່',
 
       // Form Fields
       'barcode_required': 'ບາໂຄດ *',
@@ -631,7 +631,7 @@ const Map<String, String> laTranslations = {
       'unknown_store': 'ຮ້ານບໍ່ທາງ',
 
       // Buttons
-      'creating_inventory': 'ກຳລັງສ້າງ...',
+      'creating_Restaurant': 'ກຳລັງສ້າງ...',
       'dismiss': 'ປິດ',
       'confirm_exit': 'ຢືນຢັນອອກ',
       'stay': 'ຢູ່ຕໍ່',
@@ -673,7 +673,7 @@ const Map<String, String> laTranslations = {
       'invalid_data_format': 'ຮູບແບບຂໍ້ມູນບໍ່ຖືກຕ້ອງ. ກວດສອບຂໍ້ມູນ.',
 
       // Confirmation Messages
-      'creating_inventory_exit_warning':
+      'creating_Restaurant_exit_warning':
           'ກຳລັງສ້າງສິນຄ້າໃນສາງຄັງ. ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການອອກ?',
 
       // App Title
@@ -755,7 +755,7 @@ const Map<String, String> laTranslations = {
       'na': 'ບໍ່ມີ',
       'unknownStore': 'ຮ້ານບໍ່ຮູ້ຈັກ',
       'expiry_dashboard': 'ໜ້າຈໍຄວາມສົດໃໝ່',
-      'inventory_summary': 'ສະຫຼຸບສິນຄ້າ',
+      'Restaurant_summary': 'ສະຫຼຸບສິນຄ້າ',
       'total_items': 'ສິນຄ້າທັງໝົດ',
       'good': 'ດີ',
       'expiring': 'ໃກ້ໝົດ',
@@ -903,8 +903,8 @@ const Map<String, String> laTranslations = {
       'stores_available': 'ຮ້ານຄ້າທີ່ມີ',
       'error_save_theme': 'ຜິດພາດໃນການບັນທຶກຮູບແບບ',
       'error_save_language': 'ຜິດພາດໃນການບັນທຶກພາສາ',
-      'welcome_inventory': 'ຍິນດີຕ້ອນຮັບສູ່ການຈັດການສິນຄ້າ',
-      'inventory_description': 'ຕິດຕາມລະດັບສະຕ໋ອກ',
+      'welcome_Restaurant': 'ຍິນດີຕ້ອນຮັບສູ່ການຈັດການສິນຄ້າ',
+      'Restaurant_description': 'ຕິດຕາມລະດັບສະຕ໋ອກ',
       'coming_soon': 'ໃກ້ຈະມາ',
       'select_language': 'ເລືອກພາສາ',
       'error_logout': 'ຜິດພາດໃນການອອກຈາກລະບົບ',
@@ -1046,5 +1046,5 @@ const Map<String, String> laTranslations = {
       "no_products_match_filters": "ບໍ່ມີສິນຄ້າທີ່ຕົງກັບຕົວກອງ",
       "total_amount": "ຈຳນວນລວມ",
       "product_information": "ຂໍ້ມູນສິນຄ້າ",
-      "view_inventory": "ເບິ່ງສິນຄ້າຄົງເຫລືອ",
+      "view_Restaurant": "ເບິ່ງສິນຄ້າຄົງເຫລືອ",
 };

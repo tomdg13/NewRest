@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/company_config.dart';
 
 class StockPage extends StatefulWidget {
   final String? currentTheme;
@@ -138,7 +138,7 @@ class _StockPageState extends State<StockPage>
       return;
     }
     
-    final apiUrl = '/api/inventory/company/$companyId/expire';
+    final apiUrl = '/api/Restaurant/company/$companyId/expire';
     
     try {
       final response = await http.get(
@@ -276,7 +276,7 @@ class _StockPageState extends State<StockPage>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tr('inventory_summary'),
+                          tr('Restaurant_summary'),
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

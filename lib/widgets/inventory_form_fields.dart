@@ -1,4 +1,4 @@
-// lib/widgets/inventory_form_fields.dart
+// lib/widgets/Restaurant_form_fields.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/simple_translations.dart';

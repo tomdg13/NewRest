@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
-import 'package:inventory/config/theme.dart'; // Add theme import
+import 'package:Restaurant/config/theme.dart'; // Add theme import
 import '../config/config.dart';
 import '../utils/simple_translations.dart';
 // Import your LoginPage here
-import 'package:inventory/login/login_page.dart';
+import 'package:Restaurant/login/login_page.dart';
 
 class ForgetPasswordPage extends StatefulWidget {
   final String phone;

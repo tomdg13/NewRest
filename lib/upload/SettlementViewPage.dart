@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
-import 'package:inventory/upload/SettlementDetailPage.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
+import 'package:Restaurant/upload/SettlementDetailPage.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';

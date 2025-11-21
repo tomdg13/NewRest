@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:inventory/config/missing_column_detector.dart';
+import 'package:Restaurant/config/missing_column_detector.dart';
 
 class ColumnAnalysisDisplayWidget extends StatefulWidget {
   final MissingColumnAnalysis? analysis;

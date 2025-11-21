@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/company_config.dart';
 
 class ExpirePage extends StatefulWidget {
   final String? currentTheme;
@@ -30,7 +30,7 @@ class _ExpirePageState extends State<ExpirePage>
   int? userId;
   int? branchId;
   
-  List<Map<String, dynamic>> inventoryItems = [];
+  List<Map<String, dynamic>> RestaurantItems = [];
   List<Map<String, dynamic>> expiringItems = [];
   List<Map<String, dynamic>> expiredItems = [];
   Map<String, dynamic> valueReport = {};
@@ -182,7 +182,7 @@ class _ExpirePageState extends State<ExpirePage>
       return;
     }
     
-    final apiUrl = '/api/inventory/company/$companyId/expire';
+    final apiUrl = '/api/Restaurant/company/$companyId/expire';
     print('🌐 [API] Making request to: $apiUrl');
     print('🌐 [API] Company ID: $companyId');
     print('🌐 [API] Using Bearer token: ${accessToken?.substring(0, 20)}...');

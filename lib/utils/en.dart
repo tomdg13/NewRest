@@ -1,7 +1,7 @@
 const Map<String, String> enTranslations = {
   // --- login ---
       'login': 'Login',
-      'loginTitle': 'Inventory',
+      'loginTitle': 'Restaurant',
       'logout': 'Logout',
       'username': 'Username',
       'phone': 'Phone',
@@ -434,7 +434,7 @@ const Map<String, String> enTranslations = {
       "please_select_role": "Please select role",
 
       "basic_information": "Basic Information",
-      "pricing_inventory": "Pricing & Inventory",
+      "pricing_Restaurant": "Pricing & Restaurant",
       "additional_details": "Additional Details",
       "custom_category": "Custom Category",
 
@@ -466,7 +466,7 @@ const Map<String, String> enTranslations = {
       'auth_token_not_found':
           'Authentication token not found. Please login again.',
       'session_expired': 'Session expired. Please login again.',
-      'failed_to_load_inventory': 'Failed to load inventory',
+      'failed_to_load_Restaurant': 'Failed to load Restaurant',
 
       // Page Title & Navigation
       'add_stock': 'Add Stock',
@@ -488,9 +488,9 @@ const Map<String, String> enTranslations = {
       'reserved': 'Reserved',
 
       // Sections & Headers
-      'create_new_inventory_item': 'Create New Inventory Item',
+      'create_new_Restaurant_item': 'Create New Restaurant Item',
       'add_stock_to_existing_item': 'Add Stock to Existing Item',
-      'select_inventory_item': 'Select Inventory Item',
+      'select_Restaurant_item': 'Select Restaurant Item',
       'selected_item_details': 'Selected Item Details',
       'product_location_info': 'Product & Location Information',
       'stock_info': 'Stock Information',
@@ -498,7 +498,7 @@ const Map<String, String> enTranslations = {
       'additional_info': 'Additional Information',
 
       // Form Actions & Buttons
-      'create_inventory_item': 'Create Inventory Item',
+      'create_Restaurant_item': 'Create Restaurant Item',
       'quantity_to_add': 'Quantity to Add',
       'reason_for_stock_addition': 'Reason for Stock Addition',
       'add_stock_button': 'Add Stock',
@@ -506,15 +506,15 @@ const Map<String, String> enTranslations = {
       'reset': 'Reset',
 
       // Success Messages
-      'inventory_created_success': 'Inventory item created successfully!',
+      'Restaurant_created_success': 'Restaurant item created successfully!',
       'stock_added_success': 'Stock added successfully!',
       'form_submitted_success': 'Form submitted successfully!',
       'data_saved_success': 'Data saved successfully!',
 
       // Error Messages - API
-      'failed_to_create_inventory': 'Failed to create inventory',
+      'failed_to_create_Restaurant': 'Failed to create Restaurant',
       'failed_to_add_stock': 'Failed to add stock',
-      'error_creating_inventory': 'Error creating inventory',
+      'error_creating_Restaurant': 'Error creating Restaurant',
       'error_adding_stock': 'Error adding stock',
       'api_error': 'API error occurred',
 
@@ -528,7 +528,7 @@ const Map<String, String> enTranslations = {
       'password_too_short': 'Password is too short',
       'passwords_dont_match': 'Passwords don\'t match',
 
-      // Inventory Related Terms
+      // Restaurant Related Terms
       'location': 'Location',
       'current_stock': 'Current Stock',
       'available': 'Available',
@@ -536,14 +536,14 @@ const Map<String, String> enTranslations = {
       'total_stock': 'Total Stock',
       'in_stock': 'In Stock',
       'out_of_stock': 'Out of Stock',
-      'inventory': 'Inventory',
+      'Restaurant': 'Restaurant',
       'warehouse': 'Warehouse',
       'supplier': 'Supplier',
       'batch': 'Batch',
       'expiry': 'Expiry',
 
       // Dropdown Hints & Placeholders
-      'select_inventory_item_hint': 'Select an inventory item',
+      'select_Restaurant_item_hint': 'Select an Restaurant item',
       'select_product': 'Select Product',
       'select_location': 'Select Location',
       'select_supplier': 'Select Supplier',
@@ -588,7 +588,7 @@ const Map<String, String> enTranslations = {
       'scanned_product': 'Scanned Product',
 
       // Page Title & Headers
-      'add_new_inventory': 'Add New Inventory',
+      'add_new_Restaurant': 'Add New Restaurant',
 
       // Form Fields
       'barcode_required': 'Barcode *',
@@ -605,7 +605,7 @@ const Map<String, String> enTranslations = {
       'unknown_store': 'Unknown Store',
 
       // Buttons
-      'creating_inventory': 'Creating...',
+      'creating_Restaurant': 'Creating...',
       'dismiss': 'Dismiss',
       'confirm_exit': 'Confirm Exit',
       'stay': 'Stay',
@@ -658,8 +658,8 @@ const Map<String, String> enTranslations = {
       'invalid_data_format': 'Invalid data format. Please check your input.',
 
       // Confirmation Messages
-      'creating_inventory_exit_warning':
-          'Inventory creation is in progress. Are you sure you want to exit?',
+      'creating_Restaurant_exit_warning':
+          'Restaurant creation is in progress. Are you sure you want to exit?',
 
       // App Title
       'deductStock': 'Deduct Stock',
@@ -741,7 +741,7 @@ const Map<String, String> enTranslations = {
       'na': 'N/A',
       'unknownStore': 'Unknown Store',
       'expiry_dashboard': 'Expiry Dashboard',
-      'inventory_summary': 'Inventory Summary',
+      'Restaurant_summary': 'Restaurant Summary',
       'total_items': 'Total Items',
       'good': 'Good',
       'expiring': 'Expiring',
@@ -809,8 +809,8 @@ const Map<String, String> enTranslations = {
       'home_menu': 'Dashboard',
       'error_save_theme': 'Error saving theme',
       'error_save_language': 'Error saving language',
-      'welcome_inventory': 'Welcome to Inventory Management',
-      'inventory_description': 'inventory description',
+      'welcome_Restaurant': 'Welcome to Restaurant Management',
+      'Restaurant_description': 'Restaurant description',
       'coming_soon': 'coming soon',
       'select_language': 'Select Language',
 
@@ -1044,5 +1044,5 @@ const Map<String, String> enTranslations = {
       "no_products_match_filters": "No products match your filters",
       "total_amount": "Total Amount",
       "product_information": "Product Information",
-      "view_inventory": "View Inventory",
+      "view_Restaurant": "View Restaurant",
 };

@@ -1,4 +1,4 @@
-import 'package:inventory/config/company_config.dart';
+import 'package:Restaurant/config/company_config.dart';
 // ignore: unused_import
 import 'package:uuid/uuid.dart';
 

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/company_config.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -15,7 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:typed_data';
 // Import the PDF page
-import 'package:inventory/business/TerminalPdfPage.dart' show TerminalPdfPage;
+import 'package:Restaurant/business/TerminalPdfPage.dart' show TerminalPdfPage;
 
 class TerminalEditPage extends StatefulWidget {
   final Map<String, dynamic> TerminalData;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/config.dart';
-import 'package:inventory/login/login_page.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/login/login_page.dart';
 import 'dart:convert';
 
 import '../utils/simple_translations.dart'; // adjust path if needed

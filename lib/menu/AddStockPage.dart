@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/company_config.dart';
-import 'package:inventory/config/config.dart';
-import 'package:inventory/config/theme.dart';
-import 'package:inventory/menu/MenuWigetPage.dart';
+import 'package:Restaurant/config/company_config.dart';
+import 'package:Restaurant/config/config.dart';
+import 'package:Restaurant/config/theme.dart';
+import 'package:Restaurant/menu/MenuWigetPage.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -322,7 +322,7 @@ class _AddStockPageState extends State<AddStockPage> {
   }
 
   // FORM SUBMISSION
-  Future<void> _addInventory() async {
+  Future<void> _addRestaurant() async {
     if (!_validateForm()) {
       return;
     }
@@ -333,7 +333,7 @@ class _AddStockPageState extends State<AddStockPage> {
       final body = _buildRequestBody();
 
       final response = await http.post(
-        AppConfig.api('/api/inventory'),
+        AppConfig.api('/api/Restaurant'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $_accessToken',
@@ -1390,7 +1390,7 @@ class _AddStockPageState extends State<AddStockPage> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: _isSubmitting ? null : _addInventory,
+        onPressed: _isSubmitting ? null : _addRestaurant,
         style: ElevatedButton.styleFrom(
           backgroundColor: _isSubmitting ? Colors.grey : Colors.green,
           foregroundColor: Colors.white,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:inventory/config/theme.dart';
+import 'package:Restaurant/config/theme.dart';
 // ignore: unused_import
 import 'dart:convert';
 import 'dart:io';
