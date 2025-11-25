@@ -28,6 +28,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
   late final TextEditingController _categoryController;
   late final TextEditingController _brandController;
   late final TextEditingController _barcodeController;
+  late final TextEditingController _priceController; // ✅ ADDED: Price controller
   late final TextEditingController _supplierIdController;
   late final TextEditingController _notesController;
   late final TextEditingController _unitController;
@@ -81,6 +82,15 @@ class _ProductEditPageState extends State<ProductEditPage> {
     _barcodeController = TextEditingController(
       text: widget.productData['barcode'] ?? '',
     );
+    
+    // ✅ ADDED: Initialize price controller
+    final priceValue = widget.productData['price'];
+    _priceController = TextEditingController(
+      text: priceValue != null && priceValue > 0 
+          ? priceValue.toString() 
+          : '',
+    );
+    
     _supplierIdController = TextEditingController(
       text: widget.productData['supplier_id']?.toString() ?? '',
     );
@@ -97,6 +107,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
     print(
       'DEBUG: Initialized edit form with product: ${widget.productData['product_name']}',
     );
+    print('DEBUG: Product price: ${widget.productData['price']}'); // ✅ ADDED
   }
 
   @override
@@ -107,6 +118,7 @@ class _ProductEditPageState extends State<ProductEditPage> {
     _categoryController.dispose();
     _brandController.dispose();
     _barcodeController.dispose();
+    _priceController.dispose(); // ✅ ADDED: Dispose price controller
     _supplierIdController.dispose();
     _notesController.dispose();
     _unitController.dispose();
@@ -316,7 +328,15 @@ class _ProductEditPageState extends State<ProductEditPage> {
       final productId = widget.productData['product_id'];
 
       final url = AppConfig.api('/api/ioproduct/$productId');
-      print('DEBUG: Updating product at: $url');
+      
+      print('');
+      print('╔════════════════════════════════════════════════════════════════');
+      print('║ 🔄 API PUT REQUEST - UPDATE PRODUCT');
+      print('╠════════════════════════════════════════════════════════════════');
+      print('║ URL: $url');
+      print('║ Method: PUT');
+      print('║ Product ID: $productId');
+      print('╚════════════════════════════════════════════════════════════════');
 
       final productData = <String, dynamic>{
         'company_id': CompanyConfig.getCompanyId(),
@@ -341,6 +361,15 @@ class _ProductEditPageState extends State<ProductEditPage> {
       if (_barcodeController.text.trim().isNotEmpty) {
         productData['barcode'] = _barcodeController.text.trim();
       }
+      
+      // ✅ Include price if provided
+      if (_priceController.text.trim().isNotEmpty) {
+        final price = double.tryParse(_priceController.text.trim());
+        if (price != null) {
+          productData['price'] = price;
+        }
+      }
+      
       if (_supplierIdController.text.trim().isNotEmpty) {
         productData['supplier_id'] = int.tryParse(
           _supplierIdController.text.trim(),
@@ -359,7 +388,32 @@ class _ProductEditPageState extends State<ProductEditPage> {
         productData['image_url'] = _base64Image;
       }
 
-      print('DEBUG: Update data: ${productData.toString()}');
+      print('');
+      print('╔════════════════════════════════════════════════════════════════');
+      print('║ 📤 REQUEST HEADERS');
+      print('╠════════════════════════════════════════════════════════════════');
+      print('║ Content-Type: application/json');
+      print('║ Authorization: Bearer ${token != null ? token.substring(0, 20) : 'null'}...');
+      print('╚════════════════════════════════════════════════════════════════');
+      
+      print('');
+      print('╔════════════════════════════════════════════════════════════════');
+      print('║ 📦 REQUEST PAYLOAD (JSON)');
+      print('╠════════════════════════════════════════════════════════════════');
+      
+      // Pretty print each field
+      productData.forEach((key, value) {
+        if (key == 'image_url' && value != null) {
+          print('║ $key: [BASE64 IMAGE DATA - ${(value as String).length} chars]');
+        } else {
+          print('║ $key: $value (${value.runtimeType})');
+        }
+      });
+      
+      print('╚════════════════════════════════════════════════════════════════');
+      print('');
+      print('📡 Sending PUT request...');
+      print('');
 
       final response = await http.put(
         Uri.parse(url.toString()),
@@ -370,12 +424,27 @@ class _ProductEditPageState extends State<ProductEditPage> {
         body: jsonEncode(productData),
       );
 
-      print('DEBUG: Update Response Status: ${response.statusCode}');
-      print('DEBUG: Update Response Body: ${response.body}');
+      print('');
+      print('╔════════════════════════════════════════════════════════════════');
+      print('║ 📥 API RESPONSE');
+      print('╠════════════════════════════════════════════════════════════════');
+      print('║ Status Code: ${response.statusCode}');
+      print('║ Status: ${response.statusCode == 200 ? '✅ SUCCESS' : '❌ ERROR'}');
+      print('╠════════════════════════════════════════════════════════════════');
+      print('║ Response Headers:');
+      response.headers.forEach((key, value) {
+        print('║   $key: $value');
+      });
+      print('╠════════════════════════════════════════════════════════════════');
+      print('║ Response Body:');
+      print('║ ${response.body}');
+      print('╚════════════════════════════════════════════════════════════════');
+      print('');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         if (responseData['status'] == 'success') {
+          print('✅ Product updated successfully!');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Product updated successfully!'),
@@ -392,8 +461,18 @@ class _ProductEditPageState extends State<ProductEditPage> {
           errorData['message'] ?? 'Server error: ${response.statusCode}',
         );
       }
-    } catch (e) {
-      print('DEBUG: Error updating product: $e');
+    } catch (e, stackTrace) {
+      print('');
+      print('╔════════════════════════════════════════════════════════════════');
+      print('║ ❌ ERROR OCCURRED');
+      print('╠════════════════════════════════════════════════════════════════');
+      print('║ Error: $e');
+      print('╠════════════════════════════════════════════════════════════════');
+      print('║ Stack Trace:');
+      print('║ $stackTrace');
+      print('╚════════════════════════════════════════════════════════════════');
+      print('');
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error updating product: $e'),
@@ -894,101 +973,128 @@ class _ProductEditPageState extends State<ProductEditPage> {
 
                   SizedBox(height: 16),
 
+                  // ✅ ADDED: Price field
                   _buildTextField(
-                    controller: _categoryController,
-                    label: 'Category',
-                    icon: Icons.category,
+                    controller: _priceController,
+                    label: 'Price (LAK)',
+                    icon: Icons.attach_money,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      if (value != null && value.trim().isNotEmpty) {
+                        final price = double.tryParse(value.trim());
+                        if (price == null) {
+                          return 'Please enter a valid number';
+                        }
+                        if (price < 0) {
+                          return 'Price cannot be negative';
+                        }
+                        // Check decimal places
+                        if (value.contains('.')) {
+                          final parts = value.split('.');
+                          if (parts.length == 2 && parts[1].length > 2) {
+                            return 'Maximum 2 decimal places allowed';
+                          }
+                        }
+                      }
+                      return null;
+                    },
                   ),
 
-                  _buildTextField(
-                    controller: _brandController,
-                    label: 'Brand',
-                    icon: Icons.branding_watermark,
-                  ),
+                  // _buildTextField(
+                  //   controller: _categoryController,
+                  //   label: 'Category',
+                  //   icon: Icons.category,
+                  // ),
+
+                  // _buildTextField(
+                  //   controller: _brandController,
+                  //   label: 'Brand',
+                  //   icon: Icons.branding_watermark,
+                  // ),
                 ],
               ),
 
-              SizedBox(height: 20),
+              // SizedBox(height: 20),
 
-              // Additional Information
-              _buildSectionCard(
-                title: 'Additional Details',
-                icon: Icons.more_horiz,
-                children: [
-                  _buildBarcodeField(
-                    controller: _barcodeController,
-                    label: 'Barcode',
-                    scanType: 'barcode',
-                    prefixIcon: Icons.qr_code_scanner,
-                  ),
+              // // Additional Information
+              // _buildSectionCard(
+              //   title: 'Additional Details',
+              //   icon: Icons.more_horiz,
+              //   children: [
+              //     _buildBarcodeField(
+              //       controller: _barcodeController,
+              //       label: 'Barcode',
+              //       scanType: 'barcode',
+              //       prefixIcon: Icons.qr_code_scanner,
+              //     ),
 
-                  SizedBox(height: 16),
+              //     SizedBox(height: 16),
 
-                  _buildTextField(
-                    controller: _supplierIdController,
-                    label: 'Supplier ID',
-                    icon: Icons.business,
-                    keyboardType: TextInputType.number,
-                  ),
+              //     _buildTextField(
+              //       controller: _supplierIdController,
+              //       label: 'Supplier ID',
+              //       icon: Icons.business,
+              //       keyboardType: TextInputType.number,
+              //     ),
 
-                  _buildTextField(
-                    controller: _unitController,
-                    label: 'Unit Quantity',
-                    icon: Icons.numbers,
-                    keyboardType: TextInputType.number,
-                  ),
+              //     _buildTextField(
+              //       controller: _unitController,
+              //       label: 'Unit Quantity',
+              //       icon: Icons.numbers,
+              //       keyboardType: TextInputType.number,
+              //     ),
 
-                  Container(
-                    margin: EdgeInsets.only(bottom: 16),
-                    child: DropdownButtonFormField<String>(
-                      initialValue: _selectedStatus,
-                      decoration: InputDecoration(
-                        labelText: 'Status',
-                        prefixIcon: Icon(
-                          Icons.info,
-                          color: ThemeConfig.getPrimaryColor(currentTheme),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: ThemeConfig.getPrimaryColor(currentTheme),
-                            width: 2,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                      ),
-                      items: _statusOptions.map((String status) {
-                        return DropdownMenuItem<String>(
-                          value: status,
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(status),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                              SizedBox(width: 12),
-                              Text(status.toUpperCase()),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedStatus = newValue!;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              //     Container(
+              //       margin: EdgeInsets.only(bottom: 16),
+              //       child: DropdownButtonFormField<String>(
+              //         value: _selectedStatus,
+              //         decoration: InputDecoration(
+              //           labelText: 'Status',
+              //           prefixIcon: Icon(
+              //             Icons.info,
+              //             color: ThemeConfig.getPrimaryColor(currentTheme),
+              //           ),
+              //           border: OutlineInputBorder(
+              //             borderRadius: BorderRadius.circular(12),
+              //           ),
+              //           focusedBorder: OutlineInputBorder(
+              //             borderRadius: BorderRadius.circular(12),
+              //             borderSide: BorderSide(
+              //               color: ThemeConfig.getPrimaryColor(currentTheme),
+              //               width: 2,
+              //             ),
+              //           ),
+              //           filled: true,
+              //           fillColor: Colors.grey[50],
+              //         ),
+              //         items: _statusOptions.map((String status) {
+              //           return DropdownMenuItem<String>(
+              //             value: status,
+              //             child: Row(
+              //               children: [
+              //                 Container(
+              //                   width: 12,
+              //                   height: 12,
+              //                   decoration: BoxDecoration(
+              //                     color: _getStatusColor(status),
+              //                     borderRadius: BorderRadius.circular(6),
+              //                   ),
+              //                 ),
+              //                 SizedBox(width: 12),
+              //                 Text(status.toUpperCase()),
+              //               ],
+              //             ),
+              //           );
+              //         }).toList(),
+              //         onChanged: (String? newValue) {
+              //           setState(() {
+              //             _selectedStatus = newValue!;
+              //           });
+              //         },
+              //       ),
+              //     ),
+              //   ],
+              // ),
 
               SizedBox(height: 20),
 

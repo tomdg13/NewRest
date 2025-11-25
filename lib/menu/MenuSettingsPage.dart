@@ -307,36 +307,36 @@ class _MenuSettingsPageState extends State<MenuSettingsPage> {
     return [
       
       
-      _buildGridItem(
-        icon: Icons.group,
-        title: SimpleTranslations.get(_langCode, 'group'),
-        color: Colors.blue,
-        onTap: _navigateToGroupPage,
-      ),
-      _buildGridItem(
-        icon: Icons.business,
-        title: SimpleTranslations.get(_langCode, 'merchant'),
-        color: Colors.green,
-        onTap: _navigateToMerchantPage,
-      ),
-      _buildGridItem(
-        icon: Icons.storefront,
-        title: SimpleTranslations.get(_langCode, 'store'),
-        color: Colors.orange,
-        onTap: _navigateToStorePage,
-      ),
-      _buildGridItem(
-        icon: Icons.computer,
-        title: SimpleTranslations.get(_langCode, 'terminal'),
-        color: Colors.purple,
-        onTap: _navigateToTerminalPage,
-      ),
-      _buildGridItem(
-        icon: Icons.account_tree,
-        title: SimpleTranslations.get(_langCode, 'branch'),
-        color: Colors.teal,
-        onTap: _navigateToBranchPage,
-      ),
+      // _buildGridItem(
+      //   icon: Icons.group,
+      //   title: SimpleTranslations.get(_langCode, 'group'),
+      //   color: Colors.blue,
+      //   onTap: _navigateToGroupPage,
+      // ),
+      // _buildGridItem(
+      //   icon: Icons.business,
+      //   title: SimpleTranslations.get(_langCode, 'merchant'),
+      //   color: Colors.green,
+      //   onTap: _navigateToMerchantPage,
+      // ),
+      // _buildGridItem(
+      //   icon: Icons.storefront,
+      //   title: SimpleTranslations.get(_langCode, 'store'),
+      //   color: Colors.orange,
+      //   onTap: _navigateToStorePage,
+      // ),
+      // _buildGridItem(
+      //   icon: Icons.computer,
+      //   title: SimpleTranslations.get(_langCode, 'terminal'),
+      //   color: Colors.purple,
+      //   onTap: _navigateToTerminalPage,
+      // ),
+      // _buildGridItem(
+      //   icon: Icons.account_tree,
+      //   title: SimpleTranslations.get(_langCode, 'branch'),
+      //   color: Colors.teal,
+      //   onTap: _navigateToBranchPage,
+      // ),
       _buildGridItem(
         icon: Icons.location_on,
         title: SimpleTranslations.get(_langCode, 'location'),
@@ -357,18 +357,18 @@ class _MenuSettingsPageState extends State<MenuSettingsPage> {
       ),
       
 
-      _buildGridItem(
-        icon: Icons.upload,
-        title: SimpleTranslations.get(_langCode, 'uploadSettle'),
-        color: Colors.green,
-        onTap: _navigateTosettleupload,
-      ),
-      _buildGridItem(
-        icon: Icons.upload,
-        title: SimpleTranslations.get(_langCode, 'uploadCSV'),
-        color: Colors.green,
-        onTap: _navigateTouploadCSV,
-      ),
+      // _buildGridItem(
+      //   icon: Icons.upload,
+      //   title: SimpleTranslations.get(_langCode, 'uploadSettle'),
+      //   color: Colors.green,
+      //   onTap: _navigateTosettleupload,
+      // ),
+      // _buildGridItem(
+      //   icon: Icons.upload,
+      //   title: SimpleTranslations.get(_langCode, 'uploadCSV'),
+      //   color: Colors.green,
+      //   onTap: _navigateTouploadCSV,
+      // ),
       _buildGridItem(
         icon: Icons.person,
         title: SimpleTranslations.get(_langCode, 'User'),
@@ -376,28 +376,28 @@ class _MenuSettingsPageState extends State<MenuSettingsPage> {
         onTap: _navigateToUserPage,
       ),
 
-      _buildGridItem(
-        icon: Icons.keyboard_option_key,
-        title: SimpleTranslations.get(_langCode, 'Role'),
-        color: Colors.indigo,
-        onTap: _navigateToRoleListPage,
-      ),
-//
+//       _buildGridItem(
+//         icon: Icons.keyboard_option_key,
+//         title: SimpleTranslations.get(_langCode, 'Role'),
+//         color: Colors.indigo,
+//         onTap: _navigateToRoleListPage,
+//       ),
+// //
 
-      _buildGridItem(
-        icon: Icons.key,
-        title: SimpleTranslations.get(_langCode, 'Permission'),
-        color: Colors.lightGreenAccent.shade700,
-        onTap: _navigateToRolePermissionPage,
-      ),
+//       _buildGridItem(
+//         icon: Icons.key,
+//         title: SimpleTranslations.get(_langCode, 'Permission'),
+//         color: Colors.lightGreenAccent.shade700,
+//         onTap: _navigateToRolePermissionPage,
+//       ),
 
-      _buildGridItem(
-        icon: Icons.mediation,
-        title: SimpleTranslations.get(_langCode, 'Role Permission Map'),
-        color: Colors.purple,
-        // onTap: _navigateToRolePermissionPage,
-        onTap: _navigateToMenuPermission,
-      ),
+//       _buildGridItem(
+//         icon: Icons.mediation,
+//         title: SimpleTranslations.get(_langCode, 'Role Permission Map'),
+//         color: Colors.purple,
+//         // onTap: _navigateToRolePermissionPage,
+//         onTap: _navigateToMenuPermission,
+//       ),
       
 
        
@@ -412,7 +412,6 @@ class _MenuSettingsPageState extends State<MenuSettingsPage> {
      
     ];
   }
-
   List<Widget> _buildSettingsGridItems() {
     return [
       _buildLanguageGridItem(),

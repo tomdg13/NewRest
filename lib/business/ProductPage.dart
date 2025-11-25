@@ -529,9 +529,7 @@ class _ProductPageState extends State<ProductPage> {
                       )
                     : RefreshIndicator(
                         onRefresh: fetchProducts,
-                        child: isWideScreen
-                            ? _buildGridView(cardMargin)
-                            : _buildListView(cardMargin),
+                        child: _buildGridView(cardMargin), // ✅ Always use grid view
                       ),
               ),
             ],
@@ -548,88 +546,145 @@ class _ProductPageState extends State<ProductPage> {
     );
   }
 
-  Widget _buildListView(EdgeInsets cardMargin) {
-    return ListView.builder(
-      itemCount: filteredProducts.length,
-      itemBuilder: (ctx, i) {
-        final product = filteredProducts[i];
-        print('Building list item for product: ${product.productName}');
-
-        return Card(
-          margin: cardMargin,
-          elevation: 2,
-          child: ListTile(
-            leading: _buildProductImage(product),
-            title: Text(
-              product.productName,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            subtitle: _buildProductSubtitle(product),
-            trailing: Icon(
-              Icons.edit,
-              color: ThemeConfig.getPrimaryColor(currentTheme),
-            ),
-            onTap: () => _navigateToEdit(product),
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildGridView(EdgeInsets cardMargin) {
+    // ✅ Responsive columns: 4 on mobile, 10 on desktop
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth > 600 ? 10 : 4;
+    
     return GridView.builder(
-      padding: EdgeInsets.symmetric(horizontal: cardMargin.horizontal / 2),
+      padding: EdgeInsets.all(16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: MediaQuery.of(context).size.width > 900 ? 3 : 2,
-        childAspectRatio: 3.0,
+        crossAxisCount: crossAxisCount, // ✅ 4 on mobile, 10 on desktop
+        childAspectRatio: 0.7, // ✅ Changed from 0.8 to 0.7 (taller cards for more image)
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
       itemCount: filteredProducts.length,
       itemBuilder: (ctx, i) {
         final product = filteredProducts[i];
-        print('Building grid item for product: ${product.productName}');
+        print('Building grid card for product: ${product.productName}');
 
         return Card(
-          elevation: 2,
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: InkWell(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             onTap: () => _navigateToEdit(product),
-            child: Padding(
-              padding: EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  _buildProductImage(product),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Product Image at top - ✅ BIGGER: Takes more space now
+                Expanded(
+                  flex: 5, // ✅ Increased from 3 to 5 (more image space)
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                    child: _buildCardImage(product),
+                  ),
+                ),
+                
+                // Product details at bottom - Compact info area
+                Container(
+                  padding: EdgeInsets.all(8),
+                  constraints: BoxConstraints(
+                    minHeight: 50, // ✅ Reduced from 60 to 50
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ✅ PRICE FIRST (on top)
+                      if (product.price != null && product.price! > 0)
                         Text(
-                          product.productName,
+                          '${_formatPrice(product.price!)} LAK',
                           style: TextStyle(
+                            fontSize: 12, // ✅ Slightly bigger for emphasis
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            color: Colors.green[700],
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: 4),
-                        _buildProductSubtitle(product, compact: true),
-                      ],
-                    ),
+                      
+                      SizedBox(height: 2),
+                      
+                      // ✅ PRODUCT NAME SECOND (below)
+                      Text(
+                        product.productName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500, // ✅ Medium weight
+                          fontSize: 11, // ✅ Slightly smaller
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  Icon(
-                    Icons.edit,
-                    color: ThemeConfig.getPrimaryColor(currentTheme),
-                    size: 20,
-                  ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ✅ NEW: Separate method for card image
+  Widget _buildCardImage(Product product) {
+    if (product.imageUrl == null || product.imageUrl!.isEmpty) {
+      return Container(
+        color: Colors.grey[200],
+        child: Center(
+          child: Icon(
+            Icons.inventory_2,
+            color: Colors.grey[400],
+            size: 48,
+          ),
+        ),
+      );
+    }
+
+    // Handle different image URL formats
+    String imageUrl = product.imageUrl!;
+    if (!imageUrl.startsWith('http')) {
+      final baseUrl = AppConfig.api('').toString().replaceAll('/api', '');
+      if (imageUrl.startsWith('/')) {
+        imageUrl = '$baseUrl$imageUrl';
+      } else {
+        imageUrl = '$baseUrl/$imageUrl';
+      }
+    }
+
+    return Image.network(
+      imageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          color: Colors.grey[200],
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: ThemeConfig.getPrimaryColor(currentTheme),
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  : null,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          color: Colors.grey[200],
+          child: Center(
+            child: Icon(
+              Icons.inventory_2,
+              color: Colors.grey[400],
+              size: 48,
             ),
           ),
         );
@@ -638,62 +693,22 @@ class _ProductPageState extends State<ProductPage> {
   }
 
   Widget _buildProductSubtitle(Product product, {bool compact = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (product.productCode != null && product.productCode!.isNotEmpty)
-          Text(
-            'Code: ${product.productCode}',
-            style: TextStyle(
-              fontSize: compact ? 11 : 13,
-              fontWeight: FontWeight.w500,
-              color: ThemeConfig.getPrimaryColor(currentTheme),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        if (!compact && product.category != null && product.category!.isNotEmpty)
-          Text(
-            'Category: ${product.category}',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        if (!compact && product.brand != null && product.brand!.isNotEmpty)
-          Text(
-            'Brand: ${product.brand}',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        Row(
-          children: [
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: _getStatusColor(product.status),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                product.status.toUpperCase(),
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: compact ? 8 : 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            if (!compact && product.unit != null) ...[
-              SizedBox(width: 8),
-              Text(
-                'Unit: ${product.unit}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ],
+    // Only show price
+    if (product.price != null && product.price! > 0) {
+      return Text(
+        '${_formatPrice(product.price!)} LAK', // ✅ Using formatted price
+        style: TextStyle(
+          fontSize: compact ? 12 : 14,
+          fontWeight: FontWeight.bold,
+          color: Colors.green[700],
         ),
-      ],
-    );
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+    
+    // If no price, show nothing (or you can show a placeholder)
+    return SizedBox.shrink();
   }
 
   void _navigateToEdit(Product product) async {
@@ -739,9 +754,32 @@ class _ProductPageState extends State<ProductPage> {
         return Colors.grey;
     }
   }
+
+  // ✅ NEW: Format price with thousand separators (no decimals)
+  String _formatPrice(double price) {
+    // Convert to integer (remove decimals)
+    int priceInt = price.round();
+    
+    // Convert to string
+    String priceStr = priceInt.toString();
+    
+    // Add thousand separators
+    String formatted = '';
+    int count = 0;
+    
+    for (int i = priceStr.length - 1; i >= 0; i--) {
+      if (count > 0 && count % 3 == 0) {
+        formatted = ',$formatted';
+      }
+      formatted = priceStr[i] + formatted;
+      count++;
+    }
+    
+    return formatted;
+  }
 }
 
-// Updated Product model to match your IoProduct API structure
+// ✅ UPDATED: Product model with price field
 class Product {
   final int productId;
   final int companyId;
@@ -751,6 +789,7 @@ class Product {
   final String? category;
   final String? brand;
   final String? barcode;
+  final double? price; // ✅ ADDED: Price field
   final int? supplierId;
   final DateTime createdDate;
   final DateTime updatedDate;
@@ -768,6 +807,7 @@ class Product {
     this.category,
     this.brand,
     this.barcode,
+    this.price, // ✅ ADDED: Price parameter
     this.supplierId,
     required this.createdDate,
     required this.updatedDate,
@@ -797,6 +837,22 @@ class Product {
         return DateTime.now();
       }
 
+      // ✅ ADDED: Parse price field
+      double? parsePrice(dynamic priceValue) {
+        if (priceValue == null) return null;
+        if (priceValue is double) return priceValue;
+        if (priceValue is int) return priceValue.toDouble();
+        if (priceValue is String) {
+          try {
+            return double.parse(priceValue);
+          } catch (e) {
+            print('Error parsing price "$priceValue": $e');
+            return null;
+          }
+        }
+        return null;
+      }
+
       final product = Product(
         productId: json['product_id'] ?? 0,
         companyId: json['company_id'] ?? CompanyConfig.getCompanyId(),
@@ -806,6 +862,7 @@ class Product {
         category: json['category'],
         brand: json['brand'],
         barcode: json['barcode'],
+        price: parsePrice(json['price']), // ✅ ADDED: Parse price
         supplierId: json['supplier_id'],
         createdDate: parseDate(json['created_date']),
         updatedDate: parseDate(json['updated_date']),
@@ -815,7 +872,7 @@ class Product {
         status: json['status'] ?? 'active',
       );
       
-      print('Successfully created Product: ${product.productName}');
+      print('Successfully created Product: ${product.productName} (Price: ${product.price})');
       return product;
     } catch (e, stackTrace) {
       print('Error parsing Product JSON: $e');
@@ -835,6 +892,7 @@ class Product {
       'category': category,
       'brand': brand,
       'barcode': barcode,
+      'price': price, // ✅ ADDED: Include price in JSON
       'supplier_id': supplierId,
       'created_date': createdDate.toIso8601String(),
       'updated_date': updatedDate.toIso8601String(),

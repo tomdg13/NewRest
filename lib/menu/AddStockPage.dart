@@ -30,6 +30,9 @@ class _AddStockPageState extends State<AddStockPage> {
   String? _branchId;
   late Color _primaryColor;
 
+  // Current Step (0 = location, 1 = product, 2 = form)
+  int _currentStep = 0;
+
   // Form State
   final _formKey = GlobalKey<FormState>();
   final _controllers = <String, TextEditingController>{
@@ -41,15 +44,14 @@ class _AddStockPageState extends State<AddStockPage> {
   };
 
   // Data
-  List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _locations = [];
+  List<Map<String, dynamic>> _products = [];
   List<Map<String, dynamic>> _vendors = [];
 
   // Selected Items
-  Map<String, dynamic>? _selectedProduct;
   Map<String, dynamic>? _selectedLocation;
+  Map<String, dynamic>? _selectedProduct;
   Map<String, dynamic>? _selectedVendor;
-  Map<String, dynamic>? _scannedProduct;
   DateTime? _selectedExpireDate;
 
   // Form Values
@@ -59,8 +61,8 @@ class _AddStockPageState extends State<AddStockPage> {
   // Loading States
   bool _isLoading = false;
   bool _isSubmitting = false;
-  bool _isLoadingProducts = false;
   bool _isLoadingLocations = false;
+  bool _isLoadingProducts = false;
   bool _isLoadingVendors = false;
 
   @override
@@ -94,13 +96,39 @@ class _AddStockPageState extends State<AddStockPage> {
         await Future.wait([
           _loadLocations(),
           _loadVendors(),
-          if (kIsWeb) _loadProducts(),
         ]);
       } else {
         _showMessage('Authentication token not found', isError: true);
       }
     } catch (e) {
       _showMessage('Failed to initialize: $e', isError: true);
+    }
+  }
+
+  Future<void> _loadLocations() async {
+    if (!mounted) return;
+    setState(() => _isLoadingLocations = true);
+
+    try {
+      final response = await _apiRequest(
+        'GET',
+        '/api/iolocation',
+        queryParams: {'status': 'admin', 'company_id': _companyId.toString()},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          final rawLocations = data['data'] as List? ?? [];
+          setState(() {
+            _locations = rawLocations.map(_mapLocation).toList();
+          });
+        }
+      }
+    } catch (e) {
+      _showMessage('Error loading locations: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoadingLocations = false);
     }
   }
 
@@ -125,37 +153,6 @@ class _AddStockPageState extends State<AddStockPage> {
       _showMessage('Error loading products: $e', isError: true);
     } finally {
       if (mounted) setState(() => _isLoadingProducts = false);
-    }
-  }
-
-  Future<void> _loadLocations() async {
-    if (!mounted) return;
-    setState(() => _isLoadingLocations = true);
-
-    try {
-      final response = await _apiRequest(
-        'GET',
-        '/api/iolocation',
-        queryParams: {'status': 'admin', 'company_id': _companyId.toString()},
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['status'] == 'success') {
-          final rawLocations = data['data'] as List? ?? [];
-          setState(() {
-            _locations = rawLocations.map(_mapLocation).toList();
-          });
-        } else {
-          throw Exception(data['message'] ?? 'Failed to load locations');
-        }
-      } else {
-        throw Exception('Server error: ${response.statusCode}');
-      }
-    } catch (e) {
-      _showMessage('Error loading locations: $e', isError: true);
-    } finally {
-      if (mounted) setState(() => _isLoadingLocations = false);
     }
   }
 
@@ -184,17 +181,6 @@ class _AddStockPageState extends State<AddStockPage> {
   }
 
   // DATA MAPPING
-  Map<String, dynamic> _mapProduct(dynamic product) => {
-    'product_id': product['product_id'] ?? product['id'],
-    'product_name':
-        product['product_name'] ?? product['name'] ?? 'Unknown Product',
-    'barcode': product['barcode'] ?? '',
-    'price': product['price'] ?? 0,
-    'image_url': product['image_url'] ?? '',
-    'stock_quantity': product['stock_quantity'] ?? 0,
-    'category': product['category'] ?? '',
-  };
-
   Map<String, dynamic> _mapLocation(dynamic location) => {
     'location_id': location['location_id'] ?? location['id'],
     'location':
@@ -208,6 +194,17 @@ class _AddStockPageState extends State<AddStockPage> {
     'image_url': location['image_url'] ?? '',
   };
 
+  Map<String, dynamic> _mapProduct(dynamic product) => {
+    'product_id': product['product_id'] ?? product['id'],
+    'product_name':
+        product['product_name'] ?? product['name'] ?? 'Unknown Product',
+    'barcode': product['barcode'] ?? '',
+    'price': product['price'] ?? 0,
+    'image_url': product['image_url'] ?? '',
+    'stock_quantity': product['stock_quantity'] ?? 0,
+    'category': product['category'] ?? '',
+  };
+
   Map<String, dynamic> _mapVendor(dynamic vendor) => {
     'vendor_id': vendor['vendor_id'] ?? vendor['id'],
     'vendor_name': vendor['vendor_name'] ?? vendor['name'] ?? 'Unknown vendor',
@@ -218,7 +215,16 @@ class _AddStockPageState extends State<AddStockPage> {
     'image_url': vendor['image_url'] ?? '',
   };
 
-  // PRODUCT OPERATIONS
+  // SELECTION HANDLERS
+  void _onLocationSelected(Map<String, dynamic> location) {
+    setState(() {
+      _selectedLocation = location;
+      _currentStep = 1; // Move to product selection
+    });
+    _showMessage('Selected: ${location['location']}');
+    _loadProducts(); // Load products for this location
+  }
+
   void _onProductSelected(Map<String, dynamic> product) {
     setState(() {
       _selectedProduct = product;
@@ -228,97 +234,28 @@ class _AddStockPageState extends State<AddStockPage> {
       if (product['price'] != null && product['price'] > 0) {
         _controllers['price']!.text = product['price'].toString();
       }
+      _currentStep = 2; // Move to form
     });
     _showMessage('Selected: ${product['product_name']}');
   }
 
-  Future<void> _scanBarcode() async {
-    if (kIsWeb) {
-      _showBarcodeInputDialog();
-      return;
-    }
-
-    final result = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BarcodeScannerPage(
-          langCode: _langCode,
-          primaryColor: _primaryColor,
-        ),
-      ),
-    );
-
-    if (result != null) {
-      await _lookupProductByBarcode(result);
-    }
+  void _goBackToLocationSelection() {
+    setState(() {
+      _selectedLocation = null;
+      _selectedProduct = null;
+      _products = [];
+      _currentStep = 0;
+    });
   }
 
-  void _showBarcodeInputDialog() {
-    final controller = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(SimpleTranslations.get(_langCode, 'enter_barcode')),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter product barcode',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(SimpleTranslations.get(_langCode, 'cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final barcode = controller.text.trim();
-              if (barcode.isNotEmpty) {
-                Navigator.pop(context);
-                _lookupProductByBarcode(barcode);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Search'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _lookupProductByBarcode(String barcode) async {
-    setState(() => _isLoading = true);
-
-    try {
-      final response = await _apiRequest(
-        'GET',
-        '/api/ioproduct/barcode/$barcode',
-        queryParams: {'company_id': _companyId.toString()},
-      );
-
-      final data = jsonDecode(response.body);
-      if (response.statusCode == 200 && data['status'] == 'success') {
-        final product = data['data'];
-        setState(() {
-          _scannedProduct = product;
-          _controllers['barcode']!.text = product['barcode'] ?? '';
-          _controllers['productId']!.text = product['product_id'].toString();
-          _controllers['productName']!.text = product['product_name'] ?? '';
-        });
-        _showMessage('Product found successfully');
-      } else {
-        _showMessage('Product not found', isError: true);
-      }
-    } catch (e) {
-      _showMessage('Error looking up product: $e', isError: true);
-    } finally {
-      setState(() => _isLoading = false);
-    }
+  void _goBackToProductSelection() {
+    setState(() {
+      _selectedProduct = null;
+      _controllers['productId']!.clear();
+      _controllers['productName']!.clear();
+      _controllers['barcode']!.clear();
+      _currentStep = 1;
+    });
   }
 
   // FORM SUBMISSION
@@ -390,21 +327,17 @@ class _AddStockPageState extends State<AddStockPage> {
       'company_id': _companyId,
     };
 
-    // Add vendor if selected
     if (_selectedVendor != null) {
       body['supplier_id'] = _selectedVendor!['vendor_id'];
     }
 
-    // Add optional fields
     final barcode = _controllers['barcode']!.text.trim();
     if (barcode.isNotEmpty) {
       body['barcode'] = barcode;
     }
 
     if (_selectedExpireDate != null) {
-      final expireDateString = _selectedExpireDate!.toIso8601String().split(
-        'T',
-      )[0];
+      final expireDateString = _selectedExpireDate!.toIso8601String().split('T')[0];
       body['expire_date'] = expireDateString;
     }
 
@@ -455,9 +388,9 @@ class _AddStockPageState extends State<AddStockPage> {
       _selectedLocation = null;
       _selectedVendor = null;
       _selectedProduct = null;
-      _scannedProduct = null;
       _selectedCurrency = 'LAK';
       _selectedStatus = 'active';
+      _currentStep = 0;
     });
   }
 
@@ -514,51 +447,6 @@ class _AddStockPageState extends State<AddStockPage> {
     );
   }
 
-  // IMAGE BUILDERS
-  Widget _buildImage(
-    String? imageUrl,
-    IconData fallbackIcon, {
-    double size = 40,
-  }) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(size * 0.2),
-        border: Border.all(color: Colors.grey[300]!),
-        color: Colors.grey[50],
-      ),
-      child: imageUrl != null && imageUrl.isNotEmpty
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(size * 0.2 - 1),
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Icon(fallbackIcon, color: _primaryColor, size: size * 0.6),
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Center(
-                    child: SizedBox(
-                      width: size * 0.4,
-                      height: size * 0.4,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation(_primaryColor),
-                        value: loadingProgress.expectedTotalBytes != null
-                            ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                            : null,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            )
-          : Icon(fallbackIcon, color: _primaryColor, size: size * 0.6),
-    );
-  }
-
   // BUILD METHODS
   @override
   Widget build(BuildContext context) {
@@ -566,28 +454,62 @@ class _AddStockPageState extends State<AddStockPage> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          SimpleTranslations.get(_langCode, 'add_stock'),
+          _getAppBarTitle(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
         foregroundColor: Colors.grey[800],
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        leading: _currentStep > 0
+            ? IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (_currentStep == 2) {
+                    _goBackToProductSelection();
+                  } else if (_currentStep == 1) {
+                    _goBackToLocationSelection();
+                  }
+                },
+              )
+            : null,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: Colors.grey[200]),
         ),
       ),
-      body: _isLoading
-          ? _buildLoadingScreen()
-          : Column(
-              children: [
-                if (kIsWeb) _buildWebProductSelector(),
-                if (_scannedProduct != null) _buildScannedProductInfo(),
-                Expanded(child: _buildForm()),
-              ],
-            ),
+      body: _buildBody(),
     );
+  }
+
+  String _getAppBarTitle() {
+    switch (_currentStep) {
+      case 0:
+        return SimpleTranslations.get(_langCode, 'Select Location');
+      case 1:
+        return SimpleTranslations.get(_langCode, 'Select Product');
+      case 2:
+        return SimpleTranslations.get(_langCode, 'add_stock');
+      default:
+        return SimpleTranslations.get(_langCode, 'add_stock');
+    }
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return _buildLoadingScreen();
+    }
+
+    switch (_currentStep) {
+      case 0:
+        return _buildLocationGrid();
+      case 1:
+        return _buildProductGrid();
+      case 2:
+        return _buildForm();
+      default:
+        return _buildLocationGrid();
+    }
   }
 
   Widget _buildLoadingScreen() {
@@ -625,154 +547,391 @@ class _AddStockPageState extends State<AddStockPage> {
     );
   }
 
-  Widget _buildWebProductSelector() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+  // LOCATION GRID
+  Widget _buildLocationGrid() {
+    return Column(
+      children: [
+        _buildStepIndicator(0),
+        Expanded(
+          child: _isLoadingLocations
+              ? Center(child: CircularProgressIndicator(color: _primaryColor))
+              : _locations.isEmpty
+              ? _buildEmptyState(
+                  'No locations available',
+                  Icons.location_off,
+                  _loadLocations,
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.85,
+                  ),
+                  itemCount: _locations.length,
+                  itemBuilder: (context, index) {
+                    return _buildLocationCard(_locations[index]);
+                  },
                 ),
-                child: Icon(Icons.add_circle, color: Colors.green, size: 24),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                SimpleTranslations.get(_langCode, 'select_product'),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[800],
-                ),
-              ),
-            ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationCard(Map<String, dynamic> location) {
+    return InkWell(
+      onTap: () => _onLocationSelected(location),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey[200]!,
+            width: 1,
           ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            child: _isLoadingProducts
-                ? _buildLoadingIndicator(
-                    SimpleTranslations.get(_langCode, 'loading_products'),
-                  )
-                : _products.isEmpty
-                ? _buildEmptyState(
-                    SimpleTranslations.get(_langCode, 'products'),
-                    _loadProducts,
-                  )
-                : _buildProductDropdown(),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildActionButton(
-                SimpleTranslations.get(_langCode, 'Refresh'),
-                Icons.refresh,
-                Colors.green,
-                _loadProducts,
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const Spacer(),
-              _buildCountBadge(
-                '${_products.length} products available',
-                Colors.green,
+              child: location['image_url'] != null && location['image_url'].isNotEmpty
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        location['image_url'],
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.store,
+                          color: Colors.blue,
+                          size: 32,
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      Icons.store,
+                      color: Colors.blue,
+                      size: 32,
+                    ),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                location['location'] ?? 'Unknown',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-        ],
+            ),
+            if (location['address']?.toString().isNotEmpty == true)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  location['address'],
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildScannedProductInfo() {
+  // PRODUCT GRID
+  Widget _buildProductGrid() {
+    return Column(
+      children: [
+        _buildStepIndicator(1),
+        _buildSelectedLocationBanner(),
+        Expanded(
+          child: _isLoadingProducts
+              ? Center(child: CircularProgressIndicator(color: _primaryColor))
+              : _products.isEmpty
+              ? _buildEmptyState(
+                  'No products available',
+                  Icons.inventory_2_outlined,
+                  _loadProducts,
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.all(16),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemCount: _products.length,
+                  itemBuilder: (context, index) {
+                    return _buildProductCard(_products[index]);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectedLocationBanner() {
+    if (_selectedLocation == null) return const SizedBox.shrink();
+
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.green[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green[200]!),
+        color: Colors.blue[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue[200]!),
       ),
       child: Row(
         children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green[300]!),
-              color: Colors.green[100],
-            ),
-            child: Icon(
-              Icons.qr_code_scanner,
-              color: Colors.green[600],
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 12),
+          Icon(Icons.location_on, color: Colors.blue[700], size: 20),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  SimpleTranslations.get(_langCode, 'Scanned Product'),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Product: ${_scannedProduct!['product_name'] ?? 'N/A'}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-                Text(
-                  SimpleTranslations.get(
-                    _langCode,
-                    'ID: ${_scannedProduct!['product_id']}',
-                  ),
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                ),
-              ],
+            child: Text(
+              '${SimpleTranslations.get(_langCode, 'Location')}: ${_selectedLocation!['location']}',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Colors.blue[700],
+                fontSize: 14,
+              ),
             ),
-          ),
-          IconButton(
-            icon: Icon(Icons.close, color: Colors.grey[600]),
-            onPressed: () => setState(() {
-              _scannedProduct = null;
-              _controllers['productId']!.clear();
-              _controllers['productName']!.clear();
-            }),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildProductCard(Map<String, dynamic> product) {
+    final hasStock = product['stock_quantity'] != null && product['stock_quantity'] > 0;
+    
+    return InkWell(
+      onTap: () => _onProductSelected(product),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: Colors.grey[200]!,
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                ),
+                child: product['image_url'] != null && product['image_url'].isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                        child: Image.network(
+                          product['image_url'],
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Icon(
+                            Icons.inventory,
+                            color: Colors.grey[400],
+                            size: 40,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        Icons.inventory,
+                        color: Colors.grey[400],
+                        size: 40,
+                      ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product['product_name'] ?? 'Unknown',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  if (product['price'] != null && product['price'] > 0)
+                    Text(
+                      '${product['price']} LAK',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: hasStock
+                          ? Colors.green.withOpacity(0.1)
+                          : Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'Stock: ${product['stock_quantity'] ?? 0}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: hasStock ? Colors.green[700] : Colors.red[700],
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // STEP INDICATOR
+  Widget _buildStepIndicator(int currentStep) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Row(
+        children: [
+          _buildStepCircle(0, 'Location', currentStep >= 0),
+          Expanded(child: _buildStepLine(currentStep >= 1)),
+          _buildStepCircle(1, 'Product', currentStep >= 1),
+          Expanded(child: _buildStepLine(currentStep >= 2)),
+          _buildStepCircle(2, 'Details', currentStep >= 2),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepCircle(int step, String label, bool isActive) {
+    return Column(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: isActive ? _primaryColor : Colors.grey[300],
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: Text(
+              '${step + 1}',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            color: isActive ? _primaryColor : Colors.grey[600],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepLine(bool isActive) {
+    return Container(
+      height: 2,
+      margin: const EdgeInsets.only(bottom: 20),
+      color: isActive ? _primaryColor : Colors.grey[300],
+    );
+  }
+
+  // EMPTY STATE
+  Widget _buildEmptyState(String message, IconData icon, VoidCallback onRetry) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 64, color: Colors.grey[400]),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Retry'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // FORM (Step 3)
   Widget _buildForm() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -781,27 +940,38 @@ class _AddStockPageState extends State<AddStockPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildStepIndicator(2),
+            const SizedBox(height: 16),
+            
+            // Selected items summary
+            _buildSelectionSummary(),
+            const SizedBox(height: 24),
+
             Text(
-              SimpleTranslations.get(_langCode, 'add_stock_item'),
+              SimpleTranslations.get(_langCode, 'Stock Details'),
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
 
-            _buildBarcodeField(),
-            const SizedBox(height: 16),
             _buildTextField(
               'productId',
               SimpleTranslations.get(_langCode, 'product_id'),
               required: true,
+              readOnly: true,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               'productName',
               SimpleTranslations.get(_langCode, 'product_name'),
               required: true,
+              readOnly: true,
             ),
             const SizedBox(height: 16),
-            _buildLocationDropdown(),
+            _buildTextField(
+              'barcode',
+              SimpleTranslations.get(_langCode, 'barcode'),
+              required: false,
+            ),
             const SizedBox(height: 16),
             _buildVendorDropdown(),
             const SizedBox(height: 16),
@@ -809,18 +979,16 @@ class _AddStockPageState extends State<AddStockPage> {
               'amount',
               SimpleTranslations.get(_langCode, 'add_amount'),
               required: true,
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               'price',
               SimpleTranslations.get(_langCode, 'price'),
               required: true,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 16),
-
             _buildDatePicker(),
             const SizedBox(height: 16),
             _buildStatusDropdowns(),
@@ -833,34 +1001,51 @@ class _AddStockPageState extends State<AddStockPage> {
     );
   }
 
-  Widget _buildBarcodeField() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildTextField(
-            'barcode',
-            SimpleTranslations.get(_langCode, 'barcode'),
-            required: true,
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 56,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _scanBarcode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+  Widget _buildSelectionSummary() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            SimpleTranslations.get(_langCode, 'Your Selection'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.green[700],
             ),
-            child: const Icon(Icons.qr_code_scanner),
           ),
-        ),
-      ],
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Icon(Icons.location_on, color: Colors.green[700], size: 20),
+              const SizedBox(width: 8),
+              Text(
+                _selectedLocation!['location'] ?? 'N/A',
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.inventory, color: Colors.green[700], size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  _selectedProduct!['product_name'] ?? 'N/A',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -868,14 +1053,18 @@ class _AddStockPageState extends State<AddStockPage> {
     String key,
     String label, {
     bool required = false,
+    bool readOnly = false,
     TextInputType? keyboardType,
   }) {
     return TextFormField(
       controller: _controllers[key]!,
       keyboardType: keyboardType,
+      readOnly: readOnly,
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
+        filled: readOnly,
+        fillColor: readOnly ? Colors.grey[100] : null,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 12,
@@ -895,46 +1084,7 @@ class _AddStockPageState extends State<AddStockPage> {
     );
   }
 
-  Widget _buildLocationDropdown() {
-    return _buildDropdownSection(
-      title: SimpleTranslations.get(_langCode, 'Location'),
-      icon: Icons.location_on,
-      value: _selectedLocation,
-      items: _locations,
-      isLoading: _isLoadingLocations,
-      onRefresh: _loadLocations,
-      onChanged: (value) {
-        setState(() => _selectedLocation = value);
-      },
-      itemBuilder: (item) => _buildLocationItem(item),
-    );
-  }
-
   Widget _buildVendorDropdown() {
-    return _buildDropdownSection(
-      title: SimpleTranslations.get(_langCode, 'vendor'),
-      icon: Icons.local_shipping,
-      value: _selectedVendor,
-      items: _vendors,
-      isLoading: _isLoadingVendors,
-      onRefresh: _loadVendors,
-      onChanged: (value) {
-        setState(() => _selectedVendor = value);
-      },
-      itemBuilder: (item) => _buildVendorItem(item),
-    );
-  }
-
-  Widget _buildDropdownSection<T>({
-    required String title,
-    required IconData icon,
-    required T? value,
-    required List<T> items,
-    required bool isLoading,
-    required VoidCallback onRefresh,
-    required ValueChanged<T?> onChanged,
-    required Widget Function(T) itemBuilder,
-  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -945,441 +1095,160 @@ class _AddStockPageState extends State<AddStockPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: _primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(icon, color: _primaryColor, size: 20),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title.toLowerCase() == 'location'
-                    ? SimpleTranslations.get(_langCode, 'select_location')
-                    : title.toLowerCase() == 'vendor'
-                    ? SimpleTranslations.get(_langCode, 'select_vendor')
-                    : SimpleTranslations.get(_langCode, 'select_product'),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+          Text(
+            SimpleTranslations.get(_langCode, 'Vendor (Optional)'),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
-          if (isLoading)
-            _buildLoadingIndicator(
-              title.toLowerCase() == 'location'
-                  ? SimpleTranslations.get(_langCode, 'loading_locations')
-                  : title.toLowerCase() == 'vendor'
-                  ? SimpleTranslations.get(_langCode, 'loading_vendors')
-                  : SimpleTranslations.get(_langCode, 'loading_products'),
+          if (_isLoadingVendors)
+            const Center(child: CircularProgressIndicator())
+          else if (_vendors.isEmpty)
+            Text(
+              'No vendors available',
+              style: TextStyle(color: Colors.grey[600]),
             )
-          else if (items.isEmpty)
-            _buildEmptyState(title.toLowerCase(), onRefresh)
           else
             DropdownButtonHideUnderline(
-              child: DropdownButton<T>(
-                value: value,
-                hint: Text(
-                  title.toLowerCase() == 'location'
-                      ? SimpleTranslations.get(_langCode, 'choose_location')
-                      : title.toLowerCase() == 'vendor'
-                      ? SimpleTranslations.get(_langCode, 'choose_vendor')
-                      : SimpleTranslations.get(_langCode, 'choose_product'),
-                ),
+              child: DropdownButton<Map<String, dynamic>>(
+                value: _selectedVendor,
+                hint: Text(SimpleTranslations.get(_langCode, 'Select Vendor')),
                 isExpanded: true,
-                items: items
+                items: _vendors
                     .map(
-                      (item) => DropdownMenuItem<T>(
-                        value: item,
-                        child: itemBuilder(item),
+                      (vendor) => DropdownMenuItem(
+                        value: vendor,
+                        child: Text(vendor['vendor_name'] ?? 'Unknown'),
                       ),
                     )
                     .toList(),
-                onChanged: onChanged,
+                onChanged: (value) {
+                  setState(() => _selectedVendor = value);
+                },
               ),
             ),
-          if (value != null) ...[
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.green[600], size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    SimpleTranslations.get(
-                      _langCode,
-                      'Selected: ${_getItemDisplayName(value)}',
-                    ),
-                    style: TextStyle(color: Colors.green[700], fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildActionButton(
-                SimpleTranslations.get(_langCode, 'Refresh'),
-                Icons.refresh,
-                _primaryColor,
-                onRefresh,
-              ),
-              const Spacer(),
-              _buildCountBadge(
-                '${items.length} ${title.toLowerCase()}s',
-                _primaryColor,
-              ),
-            ],
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildLocationItem(Map<String, dynamic> item) {
-    return Row(
-      children: [
-        _buildImage(item['image_url'], Icons.location_on),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item['location'] ??
-                    item['location_name'] ??
-                    SimpleTranslations.get(_langCode, 'Unknown'),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (item['description']?.toString().isNotEmpty == true)
-                Text(
-                  item['description'],
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  overflow: TextOverflow.ellipsis,
-                ),
-            ],
-          ),
+  Widget _buildDatePicker() {
+    return InkWell(
+      onTap: () async {
+        final date = await showDatePicker(
+          context: context,
+          initialDate: _selectedExpireDate ?? DateTime.now().add(const Duration(days: 365)),
+          firstDate: DateTime.now(),
+          lastDate: DateTime.now().add(const Duration(days: 3650)),
+        );
+        if (date != null) {
+          setState(() => _selectedExpireDate = date);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(4),
         ),
-        _buildStatusBadge(item['status']),
-      ],
-    );
-  }
-
-  Widget _buildVendorItem(Map<String, dynamic> item) {
-    return Row(
-      children: [
-        _buildImage(item['image_url'], Icons.local_shipping),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item['vendor_name'] ??
-                    item['name'] ??
-                    SimpleTranslations.get(_langCode, 'Unknown vendor'),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                overflow: TextOverflow.ellipsis,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _selectedExpireDate != null
+                  ? '${_selectedExpireDate!.day}/${_selectedExpireDate!.month}/${_selectedExpireDate!.year}'
+                  : SimpleTranslations.get(_langCode, 'Expire Date (Optional)'),
+              style: TextStyle(
+                color: _selectedExpireDate != null ? Colors.black : Colors.grey[600],
               ),
-              if (item['description']?.toString().isNotEmpty == true)
-                Text(
-                  item['description'],
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                  overflow: TextOverflow.ellipsis,
-                ),
-            ],
-          ),
+            ),
+            Icon(Icons.calendar_today, color: Colors.grey[600]),
+          ],
         ),
-        _buildStatusBadge(item['status']),
-      ],
-    );
-  }
-
-  Widget _buildProductDropdown() {
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<Map<String, dynamic>>(
-        value:
-            _selectedProduct != null &&
-                _products.any(
-                  (p) => p['product_id'] == _selectedProduct!['product_id'],
-                )
-            ? _selectedProduct
-            : null,
-        hint: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(SimpleTranslations.get(_langCode, 'select_product')),
-        ),
-        isExpanded: true,
-        items: _products
-            .map(
-              (product) => DropdownMenuItem<Map<String, dynamic>>(
-                value: product,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: [
-                      _buildImage(
-                        product['image_url'],
-                        Icons.inventory,
-                        size: 48,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          product['product_name'] ??
-                              SimpleTranslations.get(
-                                _langCode,
-                                'Unknown Product',
-                              ),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (product['stock_quantity'] != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: product['stock_quantity'] > 0
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            SimpleTranslations.get(
-                              _langCode,
-                              'Stock: ${product['stock_quantity']}',
-                            ),
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: product['stock_quantity'] > 0
-                                  ? Colors.green
-                                  : Colors.red,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-            .toList(),
-        onChanged: (value) {
-          if (value != null) _onProductSelected(value);
-        },
       ),
     );
   }
 
-  Widget _buildDatePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          SimpleTranslations.get(_langCode, 'expire_date_optional'), 
-          style: TextStyle(fontSize: 12, color: Colors.grey)
-        ),
-        const SizedBox(height: 4),
-        InkWell(
-          onTap: () async {
-            final date = await showDatePicker(
-              context: context,
-              initialDate: _selectedExpireDate ?? DateTime.now().add(const Duration(days: 365)),
-              firstDate: DateTime.now(),
-              lastDate: DateTime.now().add(const Duration(days: 3650)),
-            );
-            if (date != null) {
-              setState(() => _selectedExpireDate = date);
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _selectedExpireDate != null
-                    ? '${_selectedExpireDate!.day}/${_selectedExpireDate!.month}/${_selectedExpireDate!.year}'
-                    : SimpleTranslations.get(_langCode, 'select_expire_date'),
-                  style: TextStyle(color: _selectedExpireDate != null ? Colors.black : Colors.grey[600]),
-                ),
-                Icon(Icons.calendar_today, color: Colors.grey[600]),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
   Widget _buildStatusDropdowns() {
     final currencies = [
-      {
-        'code': 'LAK',
-        'name': 'Lao Kip',
-        'image_url': 'https://flagcdn.com/w40/la.png',
-      },
-      {
-        'code': 'THB',
-        'name': 'Thai Baht',
-        'image_url': 'https://flagcdn.com/w40/th.png',
-      },
-      {
-        'code': 'USD',
-        'name': 'US Dollar',
-        'image_url': 'https://flagcdn.com/w40/us.png',
-      },
+      {'code': 'LAK', 'name': 'Lao Kip'},
+      {'code': 'THB', 'name': 'Thai Baht'},
+      {'code': 'USD', 'name': 'US Dollar'},
     ];
 
     final statuses = [
-      {
-        'value': 'active',
-        'name': 'Active',
-        'image_url': 'https://img.icons8.com/color/48/checked--v1.png',
-      },
-      {
-        'value': 'inactive',
-        'name': 'Inactive',
-        'image_url': 'https://img.icons8.com/color/48/cancel--v1.png',
-      },
+      {'value': 'active', 'name': 'Active'},
+      {'value': 'inactive', 'name': 'Inactive'},
     ];
 
     return Row(
       children: [
         Expanded(
-          child: _buildSimpleDropdown(
-            SimpleTranslations.get(_langCode, 'Currency'),
-            _selectedCurrency,
-            currencies,
-            (currency) => currency['code'] as String,
-            (currency) => Row(
-              children: [
-                _buildImage(
-                  currency['image_url'],
-                  Icons.monetization_on,
-                  size: 32,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                SimpleTranslations.get(_langCode, 'Currency'),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        currency['code'] as String,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Text(
-                        currency['name'] as String,
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                      ),
-                    ],
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedCurrency,
+                    isExpanded: true,
+                    items: currencies
+                        .map((c) => DropdownMenuItem(
+                              value: c['code'],
+                              child: Text('${c['code']} - ${c['name']}'),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() => _selectedCurrency = value!);
+                    },
                   ),
                 ),
-              ],
-            ),
-            (value) {
-              setState(() => _selectedCurrency = value);
-            },
+              ),
+            ],
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildSimpleDropdown(
-            SimpleTranslations.get(_langCode, 'Status'),
-            _selectedStatus,
-            statuses,
-            (status) => status['value'] as String,
-            (status) => Row(
-              children: [
-                _buildImage(status['image_url'], Icons.info, size: 32),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    status['name'] as String,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                SimpleTranslations.get(_langCode, 'Status'),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedStatus,
+                    isExpanded: true,
+                    items: statuses
+                        .map((s) => DropdownMenuItem(
+                              value: s['value'],
+                              child: Text(s['name']!),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() => _selectedStatus = value!);
+                    },
                   ),
                 ),
-                _buildStatusBadge(status['value']),
-              ],
-            ),
-            (value) {
-              setState(() => _selectedStatus = value);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSimpleDropdown<T>(
-    String label,
-    String currentValue,
-    List<T> items,
-    String Function(T) getValue,
-    Widget Function(T) buildItem,
-    ValueChanged<String> onChanged,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-        const SizedBox(height: 4),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: currentValue,
-              isExpanded: true,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              items: items
-                  .map(
-                    (item) => DropdownMenuItem<String>(
-                      value: getValue(item),
-                      child: buildItem(item),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) => onChanged(value!),
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -1412,7 +1281,7 @@ class _AddStockPageState extends State<AddStockPage> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    SimpleTranslations.get(_langCode, 'adding_stock'),
+                    SimpleTranslations.get(_langCode, 'Adding Stock...'),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -1426,7 +1295,7 @@ class _AddStockPageState extends State<AddStockPage> {
                   Icon(Icons.add_shopping_cart, size: 24),
                   SizedBox(width: 8),
                   Text(
-                    SimpleTranslations.get(_langCode, 'add_stock_button'),
+                    SimpleTranslations.get(_langCode, 'Add Stock'),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -1434,436 +1303,4 @@ class _AddStockPageState extends State<AddStockPage> {
       ),
     );
   }
-
-  // UTILITY WIDGETS
-  Widget _buildLoadingIndicator(String text) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation(_primaryColor),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Text(
-            text,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String type, VoidCallback onRetry) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(50),
-            ),
-            child: Icon(
-              type == 'products'
-                  ? Icons.inventory_2_outlined
-                  : type == 'locations'
-                  ? Icons.location_off
-                  : Icons.local_shipping,
-              size: 48,
-              color: Colors.grey[400],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            SimpleTranslations.get(_langCode, 'No $type available'),
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh, size: 20),
-            label: Text(
-              SimpleTranslations.get(
-                _langCode,
-                'Load ${type[0].toUpperCase()}${type.substring(1)}',
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
-    return TextButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
-      style: TextButton.styleFrom(
-        foregroundColor: color,
-        backgroundColor: color.withOpacity(0.1),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
-  }
-
-  Widget _buildCountBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge(String? status) {
-    if (status == null) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: status == 'active'
-            ? Colors.green.withOpacity(0.1)
-            : Colors.orange.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-          fontSize: 9,
-          color: status == 'active' ? Colors.green[700] : Colors.orange[700],
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  String _getItemDisplayName(dynamic item) {
-    if (item is Map<String, dynamic>) {
-      return item['location'] ??
-          item['location_name'] ??
-          item['vendor_name'] ??
-          item['name'] ??
-          'Unknown';
-    }
-    return SimpleTranslations.get(_langCode, 'Unknown');
-  }
-}
-
-// Barcode Scanner Page
-class BarcodeScannerPage extends StatefulWidget {
-  final String langCode;
-  final Color primaryColor;
-
-  const BarcodeScannerPage({
-    super.key,
-    required this.langCode,
-    required this.primaryColor,
-  });
-
-  @override
-  State<BarcodeScannerPage> createState() => _BarcodeScannerPageState();
-}
-
-class _BarcodeScannerPageState extends State<BarcodeScannerPage> {
-  late MobileScannerController _controller;
-  bool _isScanned = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = MobileScannerController(
-      detectionSpeed: DetectionSpeed.noDuplicates,
-      facing: CameraFacing.back,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _onDetect(BarcodeCapture capture) {
-    if (_isScanned || !mounted) return;
-
-    final barcodes = capture.barcodes;
-    if (barcodes.isEmpty || barcodes.first.rawValue == null) return;
-
-    setState(() => _isScanned = true);
-
-    if (Platform.isAndroid || Platform.isIOS) {
-      HapticFeedback.lightImpact();
-    }
-
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context, barcodes.first.rawValue);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onDetect,
-            errorBuilder: (context, error) => _buildErrorState(),
-          ),
-
-          CustomPaint(
-            painter: ScannerOverlay(
-              scanAreaSize: 250,
-              borderColor: _isScanned ? Colors.green : widget.primaryColor,
-              borderWidth: 3,
-            ),
-            child: const SizedBox.expand(),
-          ),
-
-          if (_isScanned) _buildSuccessIndicator(),
-
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildBottomInstructions(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.camera_alt_outlined, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            SimpleTranslations.get(widget.langCode, 'camera_error'),
-            style: TextStyle(color: Colors.grey[400], fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: widget.primaryColor,
-              foregroundColor: Colors.white,
-            ),
-            child: Text(SimpleTranslations.get(widget.langCode, 'close')),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuccessIndicator() {
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.9),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              SimpleTranslations.get(widget.langCode, 'barcode Detected'),
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomInstructions() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Colors.black.withOpacity(0.8), Colors.transparent],
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.qr_code_scanner, size: 48, color: widget.primaryColor),
-          const SizedBox(height: 16),
-          Text(
-            SimpleTranslations.get(
-              widget.langCode,
-              'Position the barcode within the scanning area',
-            ),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[800],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: Text(
-                SimpleTranslations.get(widget.langCode, 'Cancel'),
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Scanner Overlay Painter
-class ScannerOverlay extends CustomPainter {
-  final double scanAreaSize;
-  final Color borderColor;
-  final double borderWidth;
-
-  const ScannerOverlay({
-    required this.scanAreaSize,
-    required this.borderColor,
-    required this.borderWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final backgroundPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    final scanAreaPath = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-            center: Offset(size.width / 2, size.height / 2),
-            width: scanAreaSize,
-            height: scanAreaSize,
-          ),
-          const Radius.circular(12),
-        ),
-      );
-
-    final overlayPath = Path.combine(
-      PathOperation.difference,
-      backgroundPath,
-      scanAreaPath,
-    );
-    canvas.drawPath(
-      overlayPath,
-      Paint()..color = Colors.black.withOpacity(0.5),
-    );
-
-    _drawCornerBrackets(canvas, size);
-  }
-
-  void _drawCornerBrackets(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = borderColor
-      ..strokeWidth = borderWidth
-      ..style = PaintingStyle.stroke;
-
-    final scanRect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height / 2),
-      width: scanAreaSize,
-      height: scanAreaSize,
-    );
-
-    const cornerLength = 20.0;
-
-    final corners = [
-      (scanRect.topLeft, true, true),
-      (scanRect.topRight, false, true),
-      (scanRect.bottomLeft, true, false),
-      (scanRect.bottomRight, false, false),
-    ];
-
-    for (final (corner, isLeft, isTop) in corners) {
-      _drawCorner(canvas, paint, corner, cornerLength, isLeft, isTop);
-    }
-  }
-
-  void _drawCorner(
-    Canvas canvas,
-    Paint paint,
-    Offset corner,
-    double length,
-    bool isLeft,
-    bool isTop,
-  ) {
-    final horizontalStart = isLeft
-        ? corner
-        : Offset(corner.dx - length, corner.dy);
-    final horizontalEnd = isLeft
-        ? Offset(corner.dx + length, corner.dy)
-        : corner;
-
-    final verticalStart = isTop
-        ? corner
-        : Offset(corner.dx, corner.dy - length);
-    final verticalEnd = isTop ? Offset(corner.dx, corner.dy + length) : corner;
-
-    canvas.drawLine(horizontalStart, horizontalEnd, paint);
-    canvas.drawLine(verticalStart, verticalEnd, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

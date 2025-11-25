@@ -27,6 +27,7 @@ class _ProductAddPageState extends State<ProductAddPage> with TickerProviderStat
   final _categoryController = TextEditingController();
   final _brandController = TextEditingController();
   final _barcodeController = TextEditingController();
+  final _priceController = TextEditingController(); // ✅ ADDED: Price controller
   final _supplierIdController = TextEditingController();
   final _notesController = TextEditingController();
   final _unitController = TextEditingController();
@@ -49,6 +50,7 @@ class _ProductAddPageState extends State<ProductAddPage> with TickerProviderStat
   final _productCodeFocus = FocusNode();
   final _categoryFocus = FocusNode();
   final _brandFocus = FocusNode();
+  final _priceFocus = FocusNode(); // ✅ ADDED: Price focus node
 
   final List<String> _statusOptions = ['active', 'inactive', 'pending'];
 
@@ -85,6 +87,7 @@ class _ProductAddPageState extends State<ProductAddPage> with TickerProviderStat
     _categoryController.dispose();
     _brandController.dispose();
     _barcodeController.dispose();
+    _priceController.dispose(); // ✅ ADDED: Dispose price controller
     _supplierIdController.dispose();
     _notesController.dispose();
     _unitController.dispose();
@@ -92,6 +95,7 @@ class _ProductAddPageState extends State<ProductAddPage> with TickerProviderStat
     _productCodeFocus.dispose();
     _categoryFocus.dispose();
     _brandFocus.dispose();
+    _priceFocus.dispose(); // ✅ ADDED: Dispose price focus node
     _fadeController.dispose();
     super.dispose();
   }
@@ -423,6 +427,10 @@ class _ProductAddPageState extends State<ProductAddPage> with TickerProviderStat
         'barcode': _barcodeController.text.trim().isNotEmpty
             ? _barcodeController.text.trim()
             : null,
+        // ✅ ADDED: Price field
+        'price': _priceController.text.trim().isNotEmpty
+            ? double.tryParse(_priceController.text.trim())
+            : null,
         'supplier_id': _supplierIdController.text.trim().isNotEmpty
             ? int.tryParse(_supplierIdController.text.trim())
             : null,
@@ -510,6 +518,17 @@ class _ProductAddPageState extends State<ProductAddPage> with TickerProviderStat
             if (_productCodeController.text.isNotEmpty) ...[
               Text('Product Code: ${_productCodeController.text}', 
                    style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+            ],
+            // ✅ ADDED: Display price in success dialog
+            if (_priceController.text.isNotEmpty) ...[
+              Text(
+                'Price: ${_priceController.text} LAK',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green[700],
+                ),
+              ),
               SizedBox(height: 8),
             ],
             if (_categoryController.text.isNotEmpty)
@@ -779,108 +798,139 @@ class _ProductAddPageState extends State<ProductAddPage> with TickerProviderStat
                         onFieldSubmitted: () => FocusScope.of(context).requestFocus(_categoryFocus),
                       ),
 
+                      // ✅ ADDED: Price field
                       _buildEnhancedTextField(
-                        controller: _categoryController,
-                        label: 'Category',
-                        icon: Icons.category,
-                        focusNode: _categoryFocus,
-                        hint: 'Enter product category',
+                        controller: _priceController,
+                        label: 'Price (LAK)',
+                        icon: Icons.attach_money,
+                        focusNode: _priceFocus,
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                        hint: 'Enter product price',
                         textInputAction: TextInputAction.next,
-                        onFieldSubmitted: () => FocusScope.of(context).requestFocus(_brandFocus),
+                        onFieldSubmitted: () => FocusScope.of(context).requestFocus(_categoryFocus),
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty) {
+                            final price = double.tryParse(value.trim());
+                            if (price == null) {
+                              return 'Please enter a valid number';
+                            }
+                            if (price < 0) {
+                              return 'Price cannot be negative';
+                            }
+                            // Check decimal places
+                            if (value.contains('.')) {
+                              final decimals = value.split('.')[1];
+                              if (decimals.length > 2) {
+                                return 'Price can have maximum 2 decimal places';
+                              }
+                            }
+                          }
+                          return null;
+                        },
                       ),
 
-                      _buildEnhancedTextField(
-                        controller: _brandController,
-                        label: 'Brand',
-                        icon: Icons.branding_watermark,
-                        focusNode: _brandFocus,
-                        hint: 'Enter brand name',
-                        textInputAction: TextInputAction.next,
-                      ),
+                      // _buildEnhancedTextField(
+                      //   controller: _categoryController,
+                      //   label: 'Category',
+                      //   icon: Icons.category,
+                      //   focusNode: _categoryFocus,
+                      //   hint: 'Enter product category',
+                      //   textInputAction: TextInputAction.next,
+                      //   onFieldSubmitted: () => FocusScope.of(context).requestFocus(_brandFocus),
+                      // ),
+
+                      // _buildEnhancedTextField(
+                      //   controller: _brandController,
+                      //   label: 'Brand',
+                      //   icon: Icons.branding_watermark,
+                      //   focusNode: _brandFocus,
+                      //   hint: 'Enter brand name',
+                      //   textInputAction: TextInputAction.next,
+                      // ),
                     ],
                   ),
 
-                  SizedBox(height: 20),
+                  // SizedBox(height: 20),
 
-                  // Additional Information
-                  _buildSectionCard(
-                    title: 'Additional Details',
-                    icon: Icons.more_horiz,
-                    children: [
-                      _buildEnhancedTextField(
-                        controller: _barcodeController,
-                        label: 'Barcode',
-                        icon: Icons.qr_code_scanner,
-                        hint: 'Enter barcode number',
-                      ),
+                  // // Additional Information
+                  // _buildSectionCard(
+                  //   title: 'Additional Details',
+                  //   icon: Icons.more_horiz,
+                  //   children: [
+                  //     _buildEnhancedTextField(
+                  //       controller: _barcodeController,
+                  //       label: 'Barcode',
+                  //       icon: Icons.qr_code_scanner,
+                  //       hint: 'Enter barcode number',
+                  //     ),
 
-                      _buildEnhancedTextField(
-                        controller: _supplierIdController,
-                        label: 'Supplier ID',
-                        icon: Icons.business,
-                        keyboardType: TextInputType.number,
-                        hint: 'Enter supplier ID',
-                      ),
+                  //     _buildEnhancedTextField(
+                  //       controller: _supplierIdController,
+                  //       label: 'Supplier ID',
+                  //       icon: Icons.business,
+                  //       keyboardType: TextInputType.number,
+                  //       hint: 'Enter supplier ID',
+                  //     ),
 
-                      _buildEnhancedTextField(
-                        controller: _unitController,
-                        label: 'Unit Quantity',
-                        icon: Icons.numbers,
-                        keyboardType: TextInputType.number,
-                        hint: 'Enter quantity in stock',
-                      ),
+                  //     _buildEnhancedTextField(
+                  //       controller: _unitController,
+                  //       label: 'Unit Quantity',
+                  //       icon: Icons.numbers,
+                  //       keyboardType: TextInputType.number,
+                  //       hint: 'Enter quantity in stock',
+                  //     ),
 
-                      Container(
-                        margin: EdgeInsets.only(bottom: 16),
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedStatus,
-                          decoration: InputDecoration(
-                            labelText: 'Status',
-                            prefixIcon: Icon(
-                              Icons.info,
-                              color: ThemeConfig.getPrimaryColor(currentTheme),
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: ThemeConfig.getPrimaryColor(currentTheme),
-                                width: 2,
-                              ),
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                          ),
-                          items: _statusOptions.map((String status) {
-                            return DropdownMenuItem<String>(
-                              value: status,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 12,
-                                    height: 12,
-                                    decoration: BoxDecoration(
-                                      color: _getStatusColor(status),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text(status.toUpperCase()),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _selectedStatus = newValue!;
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                  //     Container(
+                  //       margin: EdgeInsets.only(bottom: 16),
+                  //       child: DropdownButtonFormField<String>(
+                  //         value: _selectedStatus,
+                  //         decoration: InputDecoration(
+                  //           labelText: 'Status',
+                  //           prefixIcon: Icon(
+                  //             Icons.info,
+                  //             color: ThemeConfig.getPrimaryColor(currentTheme),
+                  //           ),
+                  //           border: OutlineInputBorder(
+                  //             borderRadius: BorderRadius.circular(12),
+                  //           ),
+                  //           focusedBorder: OutlineInputBorder(
+                  //             borderRadius: BorderRadius.circular(12),
+                  //             borderSide: BorderSide(
+                  //               color: ThemeConfig.getPrimaryColor(currentTheme),
+                  //               width: 2,
+                  //             ),
+                  //           ),
+                  //           filled: true,
+                  //           fillColor: Colors.grey[50],
+                  //         ),
+                  //         items: _statusOptions.map((String status) {
+                  //           return DropdownMenuItem<String>(
+                  //             value: status,
+                  //             child: Row(
+                  //               children: [
+                  //                 Container(
+                  //                   width: 12,
+                  //                   height: 12,
+                  //                   decoration: BoxDecoration(
+                  //                     color: _getStatusColor(status),
+                  //                     borderRadius: BorderRadius.circular(6),
+                  //                   ),
+                  //                 ),
+                  //                 SizedBox(width: 12),
+                  //                 Text(status.toUpperCase()),
+                  //               ],
+                  //             ),
+                  //           );
+                  //         }).toList(),
+                  //         onChanged: (String? newValue) {
+                  //           setState(() {
+                  //             _selectedStatus = newValue!;
+                  //           });
+                  //         },
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
 
                   SizedBox(height: 20),
 
